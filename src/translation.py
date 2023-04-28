@@ -1,5 +1,5 @@
 import cv2
-import matplotlib.pyplot as plt
+import numpy as np
 import largestinteriorrectangle as lir
 import os
 import re
@@ -36,10 +36,8 @@ class Translation:
         self.font = font
 
     def read_img(self, img_path):
-        if img_path[-3:] == "jpg":
-            img = plt.imread(img_path)
-        else:
-            img = cv2.imread(img_path)
+        img_t = Image.open(img_path)
+        img = np.array(img_t)
 
         if len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
@@ -83,7 +81,7 @@ class Translation:
         print(tr_text)
         return tr_text
 
-    def translate(self, img_path, output_path):
+    def translate(self, img_path):
         img = self.read_img(img_path)
         preds = self.predict(img)
 
@@ -142,5 +140,4 @@ class Translation:
 
             draw.multiline_text((mid_v, mid_h), multi_line, (0,0,0), font=ImageFont.truetype(self.font, font_size), anchor="mm", align="center")
 
-        output_img.show()
-        output_img.save(output_path)
+        return output_img

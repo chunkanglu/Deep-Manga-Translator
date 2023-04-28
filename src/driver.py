@@ -5,7 +5,10 @@ def main():
     img_path = r""
     out_path = r""
 
-    tr.translate(img_path, out_path)
+    output_img = tr.translate(img_path)
+
+    output_img.show()
+    output_img.save(output_path)
 
 if __name__ == "__main__":
     main()
