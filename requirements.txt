@@ -6,7 +6,7 @@ detectron2
 largestinteriorrectangle==0.2.0
 manga-ocr==0.1.8
 numpy==1.23.1
-opencv-python==4.7.0.68
+opencv-python-headless==4.7.0.68
 Pillow==9.4.0
 streamlit==1.22.0
 torch==1.13.1
