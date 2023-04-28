@@ -11,7 +11,9 @@ def translation_model():
 def main():
     st.title("Deep Manga Translator")
 
-    tr = translation_model()
+    with st.spinner("Downloading/Loading Model..."):
+        tr = translation_model()
+
     image_file = st.file_uploader("Upload An Image", type=['png', 'jpeg', 'jpg'])
 
     if image_file is not None:

@@ -3,6 +3,8 @@ import numpy as np
 import largestinteriorrectangle as lir
 import os
 import re
+from pathlib import Path
+from urllib.request import urlretrieve
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
@@ -19,6 +21,16 @@ class Translation:
                  seg_model_path="assets\model.pth",
                  text_buffer=0.9,
                  font="assets\wildwordsroman.TTF") -> None:
+        model_path = Path(seg_model_path)
+        font_path = Path(font)
+        if not model_path.exists():
+            model_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/model.pth"
+            urlretrieve(model_url, seg_model_path)
+
+        if not font_path.exists():
+            font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
+            urlretrieve(font_url, font)
+
         if (src == "ja"):
             self.ocr = MangaOcr()
         self.tr = GoogleTranslator(source=src, target=tgt)
