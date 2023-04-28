@@ -4,8 +4,6 @@ import largestinteriorrectangle as lir
 import os
 import re
 from pathlib import Path
-from urllib.request import urlopen, Request
-from shutil import copyfileobj
 from requests import get
 from tqdm import tqdm
 
@@ -20,11 +18,7 @@ from PIL import Image, ImageFont, ImageDraw
 
 def download_model(seg_model_path):
     model_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/model.pth"
-    # with urlopen(model_url) as res, open(seg_model_path, 'wb') as out_file:
-    #     copyfileobj(res, out_file)
-    # with get(model_url, stream=True) as r:
-    #     with open(seg_model_path, 'wb') as f:
-    #         copyfileobj(r.raw, f)
+
     res = get(model_url, stream=True)
     file_size = int(res.headers.get("Content-Length", 0))
     block_size = 1024
@@ -39,15 +33,7 @@ def download_model(seg_model_path):
 
 def download_font(font):
     font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
-    # with urlopen(font_url) as res, open(font, 'wb') as out_file:
-    #     copyfileobj(res, out_file)
-    # with get(font_url, stream=True) as r:
-    #     with open(font, 'wb') as f:
-    #         copyfileobj(r.raw, f)
-    # res = get(font_url)
-    # with open(font, "wb") as f:
-    #     f.write(res.content)
-    #     f.seek(0)
+
     res = get(font_url, stream=True)
     file_size = int(res.headers.get("Content-Length", 0))
     block_size = 1024
@@ -80,6 +66,7 @@ class Translation:
 
         seg_model_head, seg_model_tail = os.path.split(seg_model_path)
         cfg_pred = get_cfg()
+        cfg_pred.MODEL.DEVICE = "cpu"
         cfg_pred.OUTPUT_DIR = seg_model_head
         cfg_pred.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
         cfg_pred.MODEL.WEIGHTS = os.path.join(cfg_pred.OUTPUT_DIR, seg_model_tail)
@@ -157,7 +144,7 @@ class Translation:
             maxBuffer = int(w * self.text_buffer)
             font_size = 200
 
-            if(tr_text == None):
+            if tr_text is None:
                 continue
 
             text_arr = re.split(r'[\s\-]', tr_text)
