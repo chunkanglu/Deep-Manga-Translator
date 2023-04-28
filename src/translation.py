@@ -4,7 +4,8 @@ import largestinteriorrectangle as lir
 import os
 import re
 from pathlib import Path
-from urllib.request import urlretrieve
+from urllib.request import urlopen
+from shutil import copyfileobj
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
@@ -25,11 +26,13 @@ class Translation:
         font_path = Path(font)
         if not model_path.exists():
             model_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/model.pth"
-            urlretrieve(model_url, seg_model_path)
+            with urlopen(model_url) as res, open(seg_model_path, 'w') as out_file:
+                copyfileobj(res, out_file)
 
         if not font_path.exists():
             font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
-            urlretrieve(font_url, font)
+            with urlopen(font_url) as res, open(font, 'w') as out_file:
+                copyfileobj(res, out_file)
 
         if (src == "ja"):
             self.ocr = MangaOcr()
