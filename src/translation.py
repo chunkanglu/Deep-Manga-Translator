@@ -16,7 +16,7 @@ class Translation:
     def __init__(self, 
                  src="ja", 
                  tgt="en", 
-                 seg_model_path="assets\model_final.pth",
+                 seg_model_path="assets\model.pth",
                  text_buffer=0.9,
                  font="assets\wildwordsroman.TTF") -> None:
         if (src == "ja"):
@@ -29,7 +29,7 @@ class Translation:
         cfg_pred.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
         cfg_pred.MODEL.WEIGHTS = os.path.join(cfg_pred.OUTPUT_DIR, seg_model_tail)
         cfg_pred.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.9
-        
+
         self.predictor = DefaultPredictor(cfg_pred)
 
         self.text_buffer = text_buffer
@@ -40,7 +40,7 @@ class Translation:
             img = plt.imread(img_path)
         else:
             img = cv2.imread(img_path)
-        
+
         if len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -82,7 +82,6 @@ class Translation:
         print(text_array)
         print(tr_text)
         return tr_text
-        
 
     def translate(self, img_path, output_path):
         img = self.read_img(img_path)
@@ -90,7 +89,7 @@ class Translation:
 
         clean_img = self.clean_text_boxes(img, preds)
         bboxs = self.get_cropped_bboxs(img, preds)
-        
+
         og_text = self.get_text_array(bboxs)
         translated_text = self.get_translated_text(og_text)
 
@@ -109,12 +108,12 @@ class Translation:
                 continue
 
             text_arr = re.split(r'[\s\-]', tr_text)
-            multi_line = ""
+            multi_line = "\n"
             next_line = ""
 
             while True:
 
-                multi_line = ""
+                multi_line = "\n"
                 next_line = ""
 
                 for t in text_arr:
@@ -125,7 +124,7 @@ class Translation:
                     if (draw.textlength(next_line + " " + t, font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
                         if (next_line == ""):
                             next_line = t
-                        else :
+                        else:
                             next_line = next_line + " " + t
 
                     elif (draw.textlength(next_line, font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
@@ -140,13 +139,8 @@ class Translation:
                     break
 
                 font_size -= 2
-                
+
             draw.multiline_text((mid_v, mid_h), multi_line, (0,0,0), font=ImageFont.truetype(self.font, font_size), anchor="mm", align="center")
 
         output_img.show()
         output_img.save(output_path)
-
-
-
-
-
