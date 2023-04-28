@@ -4,8 +4,9 @@ import largestinteriorrectangle as lir
 import os
 import re
 from pathlib import Path
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from shutil import copyfileobj
+from requests import get
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
@@ -26,13 +27,27 @@ class Translation:
         font_path = Path(font)
         if not model_path.exists():
             model_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/model.pth"
-            with urlopen(model_url) as res, open(seg_model_path, 'w') as out_file:
+            with urlopen(model_url) as res, open(seg_model_path, 'wb') as out_file:
                 copyfileobj(res, out_file)
+            # with get(model_url, stream=True) as r:
+            #     with open(seg_model_path, 'wb') as f:
+            #         copyfileobj(r.raw, f)
+            # res = get(model_url)
+            # with open(seg_model_path, "wb") as f:
+            #     f.write(res.content)
+            #     f.seek(0)
 
         if not font_path.exists():
             font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
-            with urlopen(font_url) as res, open(font, 'w') as out_file:
+            with urlopen(font_url) as res, open(font, 'wb') as out_file:
                 copyfileobj(res, out_file)
+            # with get(font_url, stream=True) as r:
+            #     with open(font, 'wb') as f:
+            #         copyfileobj(r.raw, f)
+            # res = get(font_url)
+            # with open(font, "wb") as f:
+            #     f.write(res.content)
+            #     f.seek(0)
 
         if (src == "ja"):
             self.ocr = MangaOcr()
