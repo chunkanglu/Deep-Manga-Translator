@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.request import urlopen, Request
 from shutil import copyfileobj
 from requests import get
+from tqdm import tqdm
 
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
@@ -15,6 +16,47 @@ from detectron2.engine import DefaultPredictor
 from deep_translator import GoogleTranslator
 from manga_ocr import MangaOcr
 from PIL import Image, ImageFont, ImageDraw
+
+
+def download_model(seg_model_path):
+    model_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/model.pth"
+    # with urlopen(model_url) as res, open(seg_model_path, 'wb') as out_file:
+    #     copyfileobj(res, out_file)
+    # with get(model_url, stream=True) as r:
+    #     with open(seg_model_path, 'wb') as f:
+    #         copyfileobj(r.raw, f)
+    res = get(model_url, stream=True)
+    file_size = int(res.headers.get("Content-Length", 0))
+    block_size = 1024
+    progress_bar = tqdm(total=file_size, unit="iB", unit_scale=True)
+
+    with open(seg_model_path, "wb") as f:
+        for data in res.iter_content(block_size):
+            progress_bar.update(len(data))
+            f.write(data)
+
+    progress_bar.close()
+
+def download_font(font):
+    font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
+    # with urlopen(font_url) as res, open(font, 'wb') as out_file:
+    #     copyfileobj(res, out_file)
+    # with get(font_url, stream=True) as r:
+    #     with open(font, 'wb') as f:
+    #         copyfileobj(r.raw, f)
+    # res = get(font_url)
+    # with open(font, "wb") as f:
+    #     f.write(res.content)
+    #     f.seek(0)
+    res = get(font_url, stream=True)
+    file_size = int(res.headers.get("Content-Length", 0))
+    block_size = 1024
+    progress_bar = tqdm(total=file_size, unit="iB", unit_scale=True)
+
+    with open(font, "wb") as f:
+        for data in res.iter_content(block_size):
+            progress_bar.update(len(data))
+            f.write(data)
 
 class Translation:
     def __init__(self, 
@@ -25,29 +67,12 @@ class Translation:
                  font="assets\wildwordsroman.TTF") -> None:
         model_path = Path(seg_model_path)
         font_path = Path(font)
+
         if not model_path.exists():
-            model_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/model.pth"
-            with urlopen(model_url) as res, open(seg_model_path, 'wb') as out_file:
-                copyfileobj(res, out_file)
-            # with get(model_url, stream=True) as r:
-            #     with open(seg_model_path, 'wb') as f:
-            #         copyfileobj(r.raw, f)
-            # res = get(model_url)
-            # with open(seg_model_path, "wb") as f:
-            #     f.write(res.content)
-            #     f.seek(0)
+            download_model(seg_model_path)
 
         if not font_path.exists():
-            font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
-            with urlopen(font_url) as res, open(font, 'wb') as out_file:
-                copyfileobj(res, out_file)
-            # with get(font_url, stream=True) as r:
-            #     with open(font, 'wb') as f:
-            #         copyfileobj(r.raw, f)
-            # res = get(font_url)
-            # with open(font, "wb") as f:
-            #     f.write(res.content)
-            #     f.seek(0)
+            download_font(font)
 
         if (src == "ja"):
             self.ocr = MangaOcr()
