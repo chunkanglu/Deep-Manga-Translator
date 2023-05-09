@@ -11,7 +11,6 @@ from detectron2 import model_zoo
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 
-from dotenv import load_dotenv
 from deep_translator import GoogleTranslator, DeeplTranslator
 from manga_ocr import MangaOcr
 from PIL import Image, ImageFont, ImageDraw
@@ -53,10 +52,8 @@ class Translation:
                  tgt="en",
                  seg_model_path="assets\model.pth",
                  text_buffer=0.9,
-                 font="assets\wildwordsroman.TTF") -> None:
-
-        load_dotenv()
-        api_key = os.getenv('DEEPL_API_KEY')
+                 font="assets\wildwordsroman.TTF",
+                 api_key=None) -> None:
 
         model_path = Path(seg_model_path)
         font_path = Path(font)

@@ -8,7 +8,7 @@ st.set_page_config(layout="wide")
 
 @st.cache_resource
 def translation_model():
-    return Translation()
+    return Translation(api_key=st.secrets["DEEPL_API_KEY"])
 
 
 def main():
