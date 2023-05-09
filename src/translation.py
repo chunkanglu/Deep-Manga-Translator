@@ -11,7 +11,8 @@ from detectron2 import model_zoo
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 
-from deep_translator import GoogleTranslator
+from dotenv import load_dotenv
+from deep_translator import GoogleTranslator, DeeplTranslator
 from manga_ocr import MangaOcr
 from PIL import Image, ImageFont, ImageDraw
 
@@ -31,6 +32,7 @@ def download_model(seg_model_path):
 
     progress_bar.close()
 
+
 def download_font(font):
     font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
 
@@ -44,13 +46,18 @@ def download_font(font):
             progress_bar.update(len(data))
             f.write(data)
 
+
 class Translation:
-    def __init__(self, 
-                 src="ja", 
-                 tgt="en", 
+    def __init__(self,
+                 src="ja",
+                 tgt="en",
                  seg_model_path="assets\model.pth",
                  text_buffer=0.9,
                  font="assets\wildwordsroman.TTF") -> None:
+
+        load_dotenv()
+        api_key = os.getenv('DEEPL_API_KEY')
+
         model_path = Path(seg_model_path)
         font_path = Path(font)
 
@@ -62,7 +69,7 @@ class Translation:
 
         if (src == "ja"):
             self.ocr = MangaOcr()
-        self.tr = GoogleTranslator(source=src, target=tgt)
+        self.tr = DeeplTranslator(api_key=api_key, source=src, target=tgt)
 
         seg_model_head, seg_model_tail = os.path.split(seg_model_path)
         cfg_pred = get_cfg()
@@ -158,28 +165,38 @@ class Translation:
 
                 for t in text_arr:
 
-                    while (draw.textlength(t, font=ImageFont.truetype(self.font, font_size)) >= maxBuffer):
+                    while (draw.textlength(t,
+                                           font=ImageFont.truetype(self.font, font_size)) >= maxBuffer):
                         font_size -= 2
 
-                    if (draw.textlength(next_line + " " + t, font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
+                    if (draw.textlength(next_line + " " + t, 
+                                        font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
                         if (next_line == ""):
                             next_line = t
                         else:
                             next_line = next_line + " " + t
 
-                    elif (draw.textlength(next_line, font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
+                    elif (draw.textlength(next_line,
+                                          font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
                         multi_line += next_line + "\n"
                         next_line = t
 
                 multi_line += next_line + "\n"
 
-                left, top, right, bottom = draw.multiline_textbbox((mid_v, mid_h), multi_line, font=ImageFont.truetype(self.font, font_size))
+                left, top, right, bottom = draw.multiline_textbbox((mid_v, mid_h),
+                                                                   multi_line,
+                                                                   font=ImageFont.truetype(self.font, font_size))
 
                 if (bottom-top < h):
                     break
 
                 font_size -= 2
 
-            draw.multiline_text((mid_v, mid_h), multi_line, (0,0,0), font=ImageFont.truetype(self.font, font_size), anchor="mm", align="center")
+            draw.multiline_text((mid_v, mid_h),
+                                multi_line,
+                                (0,0,0),
+                                font=ImageFont.truetype(self.font, font_size),
+                                anchor="mm",
+                                align="center")
 
         return output_img
