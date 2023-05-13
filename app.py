@@ -7,8 +7,8 @@ st.set_page_config(layout="wide")
 
 
 @st.cache_resource
-def translation_model():
-    return Translation(api_key=st.secrets["DEEPL_API_KEY"])
+def translation_model(translator: str):
+    return Translation(translator=translator, api_key=st.secrets["DEEPL_API_KEY"])
 
 
 def main():
@@ -16,8 +16,11 @@ def main():
 
     st.write("A fully machine Japanese to English translation service for manga panels.")
 
+    translator = st.selectbox("Select Translator:",
+                              ["Deepl", "Google"])
+
     with st.spinner("Downloading/Loading Model..."):
-        tr = translation_model()
+        tr = translation_model(translator)
 
     with st.form(key="input"):
         n_cols = st.number_input("Number of side-by-side images:", 1, 10, 1)
@@ -27,7 +30,7 @@ def main():
         go = st.form_submit_button("Reset & Go")
 
     if go:
-        if image_files != []:
+        if image_files is not None and image_files != []:
 
             original, translated = st.columns(2)
             original.header("Raw")
@@ -45,7 +48,7 @@ def main():
                     for col, og in zip(cols1, image_files):
                         col.image(og)
 
-                image_pair = [(image.name, image) for image in image_files]
+                image_pair = [(image.name, image) for image in sorted(image_files, key=lambda x: x.name)]
 
                 zip_file = BytesIO()
 
@@ -67,9 +70,9 @@ def main():
                             trans.close()
 
             st.download_button("Download output & reset",
-                               data=zip_file,
-                               file_name="output.zip",
-                               mime="application/zip")
+                              data=zip_file,
+                              file_name="output.zip",
+                              mime="application/zip")
 
 
 if __name__ == "__main__":
