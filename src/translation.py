@@ -82,8 +82,8 @@ class Translation:
 
         seg_model_head, seg_model_tail = os.path.split(seg_model_path)
         cfg_pred = get_cfg()
-        # if not torch.cuda.is_available():
-        #     cfg_pred.MODEL.DEVICE = "cpu"
+        if not torch.cuda.is_available():
+            cfg_pred.MODEL.DEVICE = "cpu"
         cfg_pred.OUTPUT_DIR = seg_model_head
         cfg_pred.merge_from_file(model_zoo.get_config_file(
             "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
@@ -154,18 +154,16 @@ class Translation:
         max_buffer_x = int(w * self.text_buffer)
         max_buffer_y = int(h * self.text_buffer)
 
-        font_size = 200
-
         if tr_text is None:
             return
 
         text_arr = re.split(r'[\s\-]', tr_text)
-        multi_line = "\n"
-        next_line = ""
 
-        FONT = ImageFont.truetype(self.font, font_size)
+        font_size = 200
 
         while True:
+
+            curr_font = ImageFont.truetype(self.font, font_size)
 
             multi_line = "\n"
             next_line = ""
@@ -173,18 +171,20 @@ class Translation:
             for t in text_arr:
 
                 while (img_to_draw.textlength(t,
-                                              font=FONT) >= max_buffer_x):
+                                              font=curr_font) >= max_buffer_x):
                     font_size -= 2
+                    curr_font = ImageFont.truetype(self.font, font_size)
+
 
                 if (img_to_draw.textlength(next_line + " " + t,
-                                           font=FONT) < max_buffer_x):
+                                           font=curr_font) < max_buffer_x):
                     if (next_line == ""):
                         next_line = t
                     else:
                         next_line = next_line + " " + t
 
                 elif (img_to_draw.textlength(next_line,
-                                             font=FONT) < max_buffer_x):
+                                             font=curr_font) < max_buffer_x):
                     multi_line += next_line + "\n"
                     next_line = t
 
@@ -192,7 +192,7 @@ class Translation:
 
             _, top, _, bottom = img_to_draw.multiline_textbbox((mid_v, mid_h),
                                                                multi_line,
-                                                               font=FONT)
+                                                               font=curr_font)
 
             if (bottom - top < max_buffer_y):
                 break
@@ -202,7 +202,7 @@ class Translation:
         img_to_draw.multiline_text((mid_v, mid_h),
                                    multi_line,
                                    (0, 0, 0),
-                                   font=FONT,
+                                   font=curr_font,
                                    anchor="mm",
                                    align="center")
 
