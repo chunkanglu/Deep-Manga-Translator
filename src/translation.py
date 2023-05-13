@@ -210,7 +210,7 @@ class Translation:
                   img_path: str
                   ) -> Image.Image:
         img = self.read_img(img_path)
-        output_img = img.copy()
+        output_img = Image.fromarray(img.copy())
         preds = self.predict(img)
 
         masks = preds["pred_masks"].numpy().astype(bool)
