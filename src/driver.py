@@ -1,7 +1,7 @@
 from translation import Translation
 
 def main():
-    tr = Translation()
+    tr = Translation(translator="Google")
     img_path = r"C:\Users\Kang\Documents\Machine Learning\Manga_thing\manga_bubbles_test_1\images\10482900-Densetsu_no_ryuusou_14_1.jpg"
     out_path = r"res.png"
 

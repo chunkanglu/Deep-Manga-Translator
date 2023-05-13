@@ -10,13 +10,17 @@ from tqdm import tqdm
 from detectron2 import model_zoo
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
+import torch
 
 from deep_translator import GoogleTranslator, DeeplTranslator
 from manga_ocr import MangaOcr
 from PIL import Image, ImageFont, ImageDraw
 
+from typing import Any, Optional
+import numpy.typing as npt
 
-def download_model(seg_model_path):
+
+def download_model(seg_model_path: str):
     model_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/model.pth"
 
     res = get(model_url, stream=True)
@@ -32,7 +36,7 @@ def download_model(seg_model_path):
     progress_bar.close()
 
 
-def download_font(font):
+def download_font(font: str):
     font_url = "https://github.com/chunkanglu/Manga-Translator/releases/download/v0.1.0/wildwordsroman.TTF"
 
     res = get(font_url, stream=True)
@@ -48,12 +52,14 @@ def download_font(font):
 
 class Translation:
     def __init__(self,
-                 src="ja",
-                 tgt="en",
-                 seg_model_path="assets\model.pth",
-                 text_buffer=0.9,
-                 font="assets\wildwordsroman.TTF",
-                 api_key=None) -> None:
+                 translator: str = "Deepl",
+                 src: str = "ja",
+                 tgt: str = "en",
+                 seg_model_path: str = "assets/model.pth",
+                 text_buffer: float = 0.9,
+                 font: str = "assets/wildwordsroman.TTF",
+                 api_key: Optional[str] = None,
+                 ) -> None:
 
         model_path = Path(seg_model_path)
         font_path = Path(font)
@@ -66,17 +72,23 @@ class Translation:
 
         if (src == "ja"):
             self.ocr = MangaOcr()
-        # self.tr = DeeplTranslator(api_key=api_key, source=src, target=tgt)
-        self.tr = GoogleTranslator(source=src, target=tgt)
+
+        if translator == "Deepl":
+            self.tr = DeeplTranslator(api_key=api_key, source=src, target=tgt)
+        elif translator == "Google":
+            self.tr = GoogleTranslator(source=src, target=tgt)
+        else:
+            raise Exception("Invalid Translator")
 
         seg_model_head, seg_model_tail = os.path.split(seg_model_path)
         cfg_pred = get_cfg()
-        # cfg_pred.MODEL.DEVICE = "cpu"
+        # if not torch.cuda.is_available():
+        #     cfg_pred.MODEL.DEVICE = "cpu"
         cfg_pred.OUTPUT_DIR = seg_model_head
         cfg_pred.merge_from_file(model_zoo.get_config_file(
             "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-        cfg_pred.MODEL.WEIGHTS = os.path.join(
-            cfg_pred.OUTPUT_DIR, seg_model_tail)
+        cfg_pred.MODEL.WEIGHTS = os.path.join(cfg_pred.OUTPUT_DIR,
+                                              seg_model_tail)
         cfg_pred.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.9
 
         self.predictor = DefaultPredictor(cfg_pred)
@@ -84,72 +96,64 @@ class Translation:
         self.text_buffer = text_buffer
         self.font = font
 
-    def read_img(self, img_path):
+    def read_img(self,
+                 img_path: str
+                 ) -> npt.NDArray[np.uint8]:
         img_t = Image.open(img_path)
-        img = np.array(img_t)
+        img = np.asarray(img_t, dtype=np.uint8)
 
         if len(img.shape) == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-        return img.copy()
+        return img.astype(np.uint8)
 
-    def predict(self, img):
+    def predict(self,
+                img: npt.NDArray[np.uint8]
+                ) -> dict[str, Any]:
         return self.predictor(img)["instances"].to("cpu").get_fields()
 
-    # def clean_text_boxes(self, img, prediction):
-    #     img_copy = img.copy()
-    #     for mask in prediction["pred_masks"].numpy():
-    #         img_copy[mask, :] = [255, 255, 255]
-    #     return img_copy
+    def get_largest_text_box(self,
+                             mask: npt.NDArray[np.bool_]
+                             ) -> npt.NDArray[np.uint32]:
+        return lir.lir(mask).astype(np.uint32)
 
-    # def get_cropped_bboxs(self, img, prediction):
-    #     bboxs = prediction["pred_boxes"].tensor.numpy().astype(int)
-
-    #     cropped = []
-    #     for b in bboxs:
-    #         x1, y1, x2, y2 = b
-    #         crop = img[y1:y2, x1:x2]
-    #         cropped.append(crop)
-
-    #     return cropped
-
-    def get_largest_text_box(self, mask):
-        return lir.lir(mask.numpy().astype(bool))
-
-    # def get_text_array(self, bboxs):
-    #     text = []
-    #     for i in bboxs:
-    #         text.append(self.ocr(Image.fromarray(i)))
-    #     return text
-
-    # def get_translated_text(self, text_array):
-    #     tr_text = []
-    #     for i in text_array:
-    #         tr_text.append(self.tr.translate(i))
-    #     print(text_array)
-    #     print(tr_text)
-    #     return tr_text
-    
-    def clean_text_box(self, img, mask):
+    def clean_text_box(self,
+                       img: npt.NDArray[np.uint8],
+                       mask: npt.NDArray[np.bool_]
+                       ) -> npt.NDArray[np.uint8]:
         img_copy = img.copy()
         img_copy[mask, :] = [255, 255, 255]
         return img_copy
-    
-    def get_crop(self, img, bbox):
+
+    def get_crop(self,
+                 img:npt.NDArray[np.uint8],
+                 bbox:
+                 tuple[int, int, int, int]
+                 ) -> npt.NDArray[np.uint8]:
         x1, y1, x2, y2 = bbox
         return img[y1:y2, x1:x2]
-    
-    def get_text(self, img):
+
+    def get_text(self,
+                 img: npt.NDArray[np.uint8]
+                 ) -> str:
         return self.ocr(Image.fromarray(img))
-    
-    def get_tr_text(self, text):
+
+    def get_tr_text(self,
+                    text: str
+                    ) -> str:
         return self.tr.translate(text)
 
-    def draw_text(self, mask, tr_text, img_to_draw):
+    def draw_text(self,
+                  mask: npt.NDArray[np.bool_],
+                  tr_text: str,
+                  img_to_draw: ImageDraw.ImageDraw
+                  ) -> None:
         (x, y, w, h) = self.get_largest_text_box(mask)
         mid_v = x + w // 2
         mid_h = y + h // 2
-        maxBuffer = int(w * self.text_buffer)
+        max_buffer_x = int(w * self.text_buffer)
+        max_buffer_y = int(h * self.text_buffer)
+
         font_size = 200
 
         if tr_text is None:
@@ -159,6 +163,8 @@ class Translation:
         multi_line = "\n"
         next_line = ""
 
+        FONT = ImageFont.truetype(self.font, font_size)
+
         while True:
 
             multi_line = "\n"
@@ -167,28 +173,28 @@ class Translation:
             for t in text_arr:
 
                 while (img_to_draw.textlength(t,
-                                              font=ImageFont.truetype(self.font, font_size)) >= maxBuffer):
+                                              font=FONT) >= max_buffer_x):
                     font_size -= 2
 
                 if (img_to_draw.textlength(next_line + " " + t,
-                                           font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
+                                           font=FONT) < max_buffer_x):
                     if (next_line == ""):
                         next_line = t
                     else:
                         next_line = next_line + " " + t
 
                 elif (img_to_draw.textlength(next_line,
-                                             font=ImageFont.truetype(self.font, font_size)) < maxBuffer):
+                                             font=FONT) < max_buffer_x):
                     multi_line += next_line + "\n"
                     next_line = t
 
             multi_line += next_line + "\n"
 
-            left, top, right, bottom = img_to_draw.multiline_textbbox((mid_v, mid_h),
-                                                                      multi_line,
-                                                                      font=ImageFont.truetype(self.font, font_size))
+            _, top, _, bottom = img_to_draw.multiline_textbbox((mid_v, mid_h),
+                                                               multi_line,
+                                                               font=FONT)
 
-            if (bottom-top < h):
+            if (bottom - top < max_buffer_y):
                 break
 
             font_size -= 2
@@ -196,46 +202,30 @@ class Translation:
         img_to_draw.multiline_text((mid_v, mid_h),
                                    multi_line,
                                    (0, 0, 0),
-                                   font=ImageFont.truetype(
-                                       self.font, font_size),
+                                   font=FONT,
                                    anchor="mm",
                                    align="center")
 
-    def translate(self, img_path):
+    def translate(self,
+                  img_path: str
+                  ) -> Image.Image:
         img = self.read_img(img_path)
-        output_img = None
+        output_img = img.copy()
         preds = self.predict(img)
 
-        masks = preds["pred_masks"].numpy()
+        masks = preds["pred_masks"].numpy().astype(bool)
         bboxs = preds["pred_boxes"].tensor.numpy().astype(int)
 
         for mask, bbox in zip(masks, bboxs):
-            img = self.clean_text_box(img, mask)
-            output_img = Image.fromarray(img)
+            output_img = self.clean_text_box(np.asarray(output_img), mask)
+            output_img = Image.fromarray(output_img)
             draw = ImageDraw.Draw(output_img)
 
             crop = self.get_crop(img, bbox)
+
             og_text = self.get_text(crop)
             tr_text = self.get_tr_text(og_text)
 
-            self.draw_text(mask, tr_text, draw)
-
-        return output_img
-
-
-
-
-
-        clean_img = self.clean_text_boxes(img, preds)
-        bboxs = self.get_cropped_bboxs(img, preds)
-
-        og_text = self.get_text_array(bboxs)
-        translated_text = self.get_translated_text(og_text)
-
-        output_img = Image.fromarray(clean_img)
-        draw = ImageDraw.Draw(output_img)
-
-        for mask, tr_text in zip(preds["pred_masks"], translated_text):
             self.draw_text(mask, tr_text, draw)
 
         return output_img
