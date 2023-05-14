@@ -56,7 +56,7 @@ class Translation:
                  src: str = "ja",
                  tgt: str = "en",
                  seg_model_path: str = "assets/model.pth",
-                 text_buffer: float = 0.9,
+                 text_buffer: float = 0.95,
                  font: str = "assets/wildwordsroman.TTF",
                  api_key: Optional[str] = None,
                  ) -> None:

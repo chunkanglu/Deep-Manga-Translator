@@ -22,7 +22,7 @@ def main():
     with st.spinner("Downloading/Loading Model..."):
         tr = translation_model(translator)
 
-    with st.form(key="input"):
+    with st.form(key="input", clear_on_submit=True):
         n_cols = st.number_input("Number of side-by-side images:", 1, 10, 1)
 
         image_files = st.file_uploader("Upload Images", type=['png', 'jpeg', 'jpg'], accept_multiple_files=True)
