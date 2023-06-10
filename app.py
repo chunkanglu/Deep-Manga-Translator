@@ -6,7 +6,7 @@ from io import BytesIO
 st.set_page_config(layout="wide")
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def translation_model(translator: str):
     return Translation(translator=translator, api_key=st.secrets["DEEPL_API_KEY"])
 
@@ -40,6 +40,8 @@ def main():
 
             n_row = int(1 + len(image_files) // int(n_cols))
 
+            image_files = sorted(image_files, key=lambda x: x.name)
+
             with st.spinner("Processing..."):
 
                 with original:
@@ -48,7 +50,7 @@ def main():
                     for col, og in zip(cols1, image_files):
                         col.image(og)
 
-                image_pair = [(image.name, image) for image in sorted(image_files, key=lambda x: x.name)]
+                image_pair = [(image.name, image) for image in image_files]
 
                 zip_file = BytesIO()
 
