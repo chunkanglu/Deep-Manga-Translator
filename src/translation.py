@@ -64,6 +64,9 @@ class Translation:
         model_path = Path(seg_model_path)
         font_path = Path(font)
 
+        if not os.path.exists("assets"):
+            os.makedirs("assets")
+
         if not model_path.exists():
             download_model(seg_model_path)
 
