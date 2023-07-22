@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import numpy.typing as npt
+from typing import Any
 
 from segmentation.basemodel import BaseModel
 
@@ -18,18 +19,14 @@ class BaseProcessor():
         self.last_image = None
         self.prediction = None
 
-    # def get_masks(self,
-    #               image: npt.NDArray[np.uint8]
-    #               ) -> list[npt.NDArray[np.bool_]]:
-    #     raise NotImplementedError
-    
-    # def get_text_bboxs(self,
-    #                    image: npt.NDArray[np.uint8]
-    #                    ) -> list[tuple[int, int, int, int]]:
-    #     raise NotImplementedError
-
-    # def empty_cache(self) -> None:
-    #     self.last_image = None
+    def cache_prediction(self,
+                         image: npt.NDArray[np.uint8]
+                         ) -> dict[str, Any]:
+        if (self.last_image is None) or (not np.array_equal(self.last_image, image)):
+            self.last_image = image
+            self.prediction = self.seg_model.predict(image)
+        assert self.prediction is not None
+        return self.prediction
 
     def clean_text(self,
                    image: npt.NDArray[np.uint8]

@@ -37,5 +37,8 @@ def main():
     output = tr.translate_page("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/MangaDatasetSeparate/images/e485d130-boukensha_guild_17_3.jpg")
     output.show()
 
+    output = tr.translate_page("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/DATA/Manga109s_released_2021_12_30/images/Arisa/000.jpg")
+    output.show()
+
 if __name__ == "__main__":
     main()

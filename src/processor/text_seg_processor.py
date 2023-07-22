@@ -16,14 +16,6 @@ class TextSegProcessor(BaseProcessor):
                  ocr_model) -> None:
         super().__init__(seg_model, inpaint_model, translator, ocr_model)
 
-    def cache_prediction(self,
-                         image: npt.NDArray[np.uint8]
-                         ) -> dict[str, Any]:
-        if not np.array_equal(self.last_image, image):
-            self.last_image = image
-            self.prediction = self.seg_model.predict(image)
-        return self.prediction
-
     def clean_text(self,
                    image: npt.NDArray[np.uint8]
                    ) -> npt.NDArray[np.uint8]:
