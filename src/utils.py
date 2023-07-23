@@ -2,6 +2,7 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
 import re
+from textwrap import fill
 
 COLOR_WHITE = (255, 255, 255)
 
@@ -36,44 +37,30 @@ def draw_text(bbox: tuple[int, int, int, int],
     if tr_text is None:
         return
 
-    text_arr = re.split(r'[\s\-]', tr_text)
-
     font_size = 200
 
-    while True:
+    while font_size > 0:
 
         curr_font = ImageFont.truetype(font_path, font_size)
 
-        multi_line = "\n"
-        next_line = ""
+        # W is the widest character
+        max_char_len = int(img_to_draw.textlength("W", font=curr_font))
+        row_max_chars = max_buffer_x // max_char_len
 
-        for t in text_arr:
+        if row_max_chars == 0:
+            font_size -= 2
+            continue
 
-            while (img_to_draw.textlength(t,
-                                            font=curr_font) >= max_buffer_x):
-                font_size -= 2
-                curr_font = ImageFont.truetype(font_path, font_size)
+        multi_line = fill(text=tr_text,
+                          width=row_max_chars,
+                          break_long_words=False,
+                          break_on_hyphens=True)
 
-
-            if (img_to_draw.textlength(next_line + " " + t,
-                                        font=curr_font) < max_buffer_x):
-                if (next_line == ""):
-                    next_line = t
-                else:
-                    next_line = next_line + " " + t
-
-            elif (img_to_draw.textlength(next_line,
-                                            font=curr_font) < max_buffer_x):
-                multi_line += next_line + "\n"
-                next_line = t
-
-        multi_line += next_line + "\n"
-
-        _, top, _, bottom = img_to_draw.multiline_textbbox((mid_v, mid_h),
+        left, top, right, bottom = img_to_draw.multiline_textbbox((mid_v, mid_h),
                                                             multi_line,
                                                             font=curr_font)
 
-        if (bottom - top < max_buffer_y):
+        if (right - left < max_buffer_x) and (bottom - top < max_buffer_y):
             break
 
         font_size -= 2
