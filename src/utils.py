@@ -63,8 +63,6 @@ def draw_text(bbox: tuple[int, int, int, int],
     much_taller_than_wide = (y2 - y1) > (2 * (x2 - x1))
     is_single_word = len(tr_text.split()) == 1
 
-    spacing = 1 if is_single_word and much_taller_than_wide else 4
-
     print_text = ""
 
     upper_font_size = 200
@@ -97,7 +95,7 @@ def draw_text(bbox: tuple[int, int, int, int],
                                                                   font=curr_font,
                                                                   anchor="mm",
                                                                   align="center",
-                                                                  spacing=spacing,
+                                                                  spacing=1,
                                                                   stroke_width=3)
 
         if (right - left < max_buffer_x) and (bottom - top < max_buffer_y):
@@ -113,5 +111,6 @@ def draw_text(bbox: tuple[int, int, int, int],
                                font=print_font,
                                anchor="mm",
                                align="center",
-                               spacing=spacing,
+                               spacing=1,
+                               stroke_width=3,
                                stroke_fill=COLOR_WHITE)
