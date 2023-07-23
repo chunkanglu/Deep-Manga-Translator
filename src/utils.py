@@ -3,6 +3,8 @@ import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
 import re
 
+COLOR_WHITE = (255, 255, 255)
+
 def get_crop(img: npt.NDArray[np.uint8],
              bbox: tuple[int, int, int, int]
              ) -> npt.NDArray[np.uint8]:
@@ -81,4 +83,6 @@ def draw_text(bbox: tuple[int, int, int, int],
                                 (0, 0, 0),
                                 font=curr_font,
                                 anchor="mm",
-                                align="center")
+                                align="center",
+                                stroke_width=3,
+                                stroke_fill=COLOR_WHITE)
