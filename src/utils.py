@@ -39,6 +39,9 @@ def draw_text(bbox: tuple[int, int, int, int],
 
     font_size = 200
 
+    multi_line = ""
+    curr_font = None
+
     while font_size > 0:
 
         curr_font = ImageFont.truetype(font_path, font_size)
@@ -47,6 +50,7 @@ def draw_text(bbox: tuple[int, int, int, int],
         max_char_len = int(img_to_draw.textlength("W", font=curr_font))
         row_max_chars = max_buffer_x // max_char_len
 
+        # Skip if even a single char can't fit
         if row_max_chars == 0:
             font_size -= 2
             continue
@@ -64,6 +68,10 @@ def draw_text(bbox: tuple[int, int, int, int],
             break
 
         font_size -= 2
+
+    # Do not write if invalid
+    if font_size < 0:
+        return
 
     img_to_draw.multiline_text((mid_v, mid_h),
                                 multi_line,
