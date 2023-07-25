@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import Any
 
-from segmentation.basemodel import BaseModel
+from src.segmentation.basemodel import BaseModel
 
 class BubbleSegmentationModel(BaseModel):
     def __init__(self,

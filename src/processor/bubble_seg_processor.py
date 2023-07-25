@@ -4,9 +4,9 @@ import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
 import re
 
-from processor.baseprocessor import BaseProcessor
-from segmentation.bubble_seg import BubbleSegmentationModel
-from utils import get_crop, get_text, get_tr_text, draw_text
+from src.processor.baseprocessor import BaseProcessor
+from src.segmentation.bubble_seg import BubbleSegmentationModel
+from src.utils import get_crop, get_text, get_tr_text, draw_text
 
 class BubbleSegProcessor(BaseProcessor):
     def __init__(self,

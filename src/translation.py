@@ -15,7 +15,7 @@ import numpy as np
 # from deep_translator import GoogleTranslator, DeeplTranslator
 # from manga_ocr import MangaOcr
 from PIL import Image, ImageFont, ImageDraw
-from processor.baseprocessor import BaseProcessor
+from src.processor.baseprocessor import BaseProcessor
 
 # from typing import Any, Optional
 import numpy.typing as npt

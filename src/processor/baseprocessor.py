@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import Any
 
-from segmentation.basemodel import BaseModel
+from src.segmentation.basemodel import BaseModel
 
 class BaseProcessor():
     def __init__(self,

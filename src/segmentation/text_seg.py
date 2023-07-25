@@ -2,13 +2,12 @@ import albumentations as A
 import cv2
 import numpy as np
 import numpy.typing as npt
-import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.encoders import get_preprocessing_fn
 import torch
 from typing import Any
 
+from src.segmentation.basemodel import BaseModel
 
-from segmentation.basemodel import BaseModel
 
 class TextSegmentationModel(BaseModel):
     def __init__(self,
@@ -25,15 +24,15 @@ class TextSegmentationModel(BaseModel):
 
         def get_preprocessing(preprocessing_fn):
             """Construct preprocessing transform
-            
+
             Args:
                 preprocessing_fn (callable): data normalization function 
                     (can be specific for each pretrained neural network)
             Return:
                 transform: albumentations.Compose
-            
+
             """
-            
+
             _transform = [
                 A.Lambda(image=preprocessing_fn),
                 A.Lambda(image=to_tensor, mask=to_tensor_mask),
@@ -42,14 +41,16 @@ class TextSegmentationModel(BaseModel):
 
         preprocessing_fn = get_preprocessing_fn(encoder_name="resnet34",
                                                 pretrained="imagenet")
-        
+
         self.preprocessing = get_preprocessing(preprocessing_fn)
 
-        self.dialate = lambda x: cv2.morphologyEx(x,
-                                                  cv2.MORPH_DILATE,
-                                                  cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
-                                                                            (12, 12)))
-        
+        self.dialate = \
+            lambda x, iterations: cv2.morphologyEx(x,
+                                                   cv2.MORPH_DILATE,
+                                                   cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
+                                                                             (3, 3)),
+                                                   iterations=iterations)
+
         self.predictor = torch.load(self.model_path).to(self.device)
 
     def predict(self,
@@ -67,18 +68,20 @@ class TextSegmentationModel(BaseModel):
 
         image_tensor = torch.from_numpy(image).to(self.device).unsqueeze(0)
 
-        prediction = self.predictor.predict(image_tensor.permute(0, 3, 1, 2).float())
+        prediction = self.predictor.predict(
+            image_tensor.permute(0, 3, 1, 2).float())
 
         pred_mask = prediction.squeeze().cpu().numpy()
         pred_mask = pred_mask[:og_shape[0], :og_shape[1]]
-        pred_mask = self.dialate(pred_mask)
-        dialated = self.dialate(pred_mask)
+        pred_mask = self.dialate(pred_mask, 3)
+        dialated = self.dialate(pred_mask, 5)
 
         pred_mask = pred_mask > 0.5
 
-        thresh = cv2.threshold(dialated, 0.5, 1, cv2.THRESH_BINARY)[1].astype(np.uint8)
+        thresh = cv2.threshold(dialated, 0.5, 1, cv2.THRESH_BINARY)[
+            1].astype(np.uint8)
         num_labels, _, stats, _ = cv2.connectedComponentsWithStats(thresh,
-                                                                    connectivity=8)
+                                                                   connectivity=8)
         bboxes = []
         for label in range(1, num_labels):
             x1 = stats[label, cv2.CC_STAT_LEFT]
@@ -92,4 +95,3 @@ class TextSegmentationModel(BaseModel):
             "mask": pred_mask,
             "bboxs": bboxes
         }
-

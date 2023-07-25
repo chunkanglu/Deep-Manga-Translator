@@ -4,9 +4,9 @@ from PIL import Image, ImageDraw, ImageFont
 import re
 from typing import Any
 
-from processor.baseprocessor import BaseProcessor
-from segmentation.text_seg import TextSegmentationModel
-from utils import get_crop, get_text, get_tr_text, draw_text
+from src.processor.baseprocessor import BaseProcessor
+from src.segmentation.text_seg import TextSegmentationModel
+from src.utils import get_crop, get_text, get_tr_text, draw_text
 
 class TextSegProcessor(BaseProcessor):
     def __init__(self,

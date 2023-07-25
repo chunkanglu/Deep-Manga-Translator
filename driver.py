@@ -1,6 +1,6 @@
-from translation import Translation
-from  processor.text_seg_processor import TextSegProcessor
-from segmentation.text_seg import TextSegmentationModel
+from src.translation import Translation
+from  src.processor.text_seg_processor import TextSegProcessor
+from src.segmentation.text_seg import TextSegmentationModel
 import cv2
 import matplotlib.pyplot as plt
 
@@ -8,8 +8,11 @@ from deep_translator import GoogleTranslator, DeeplTranslator
 from manga_ocr import MangaOcr
 
 from PIL import Image
+from dotenv import load_dotenv
+import os
 
 def main():
+    load_dotenv()
 
     # processor = 
     # tr = Translation(translator="Google")
@@ -25,7 +28,8 @@ def main():
 
     seg = TextSegmentationModel("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/best_model_v2.pth",
                                 "cpu")
-    translator = GoogleTranslator("ja", "en")
+    # translator = GoogleTranslator("ja", "en")
+    translator = DeeplTranslator("ja", "en", os.environ.get("DEEPL_API_KEY"))
     ocr = MangaOcr()
     processor = TextSegProcessor(seg,
                                  None,
@@ -34,10 +38,7 @@ def main():
     
     tr = Translation(processor)
     
-    output = tr.translate_page("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/MangaDatasetSeparate/images/e485d130-boukensha_guild_17_3.jpg")
-    output.show()
-
-    output = tr.translate_page("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/DATA/Manga109s_released_2021_12_30/images/Arisa/000.jpg")
+    output = tr.translate_page("experiments/manga_bubbles_train_2/images/f6dbb986-Daring_in_the_Franxx_44_4.jpg")
     output.show()
 
 if __name__ == "__main__":
