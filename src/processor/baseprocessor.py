@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 from PIL import Image
 import numpy as np
 import numpy.typing as npt
@@ -5,7 +6,7 @@ from typing import Any
 
 from src.segmentation.basemodel import BaseModel
 
-class BaseProcessor():
+class BaseProcessor(metaclass=ABCMeta):
     def __init__(self,
                  seg_model: BaseModel,
                  inpaint_model,
@@ -28,11 +29,13 @@ class BaseProcessor():
         assert self.prediction is not None
         return self.prediction
 
+    @abstractmethod
     def clean_text(self,
                    image: npt.NDArray[np.uint8]
                    ) -> npt.NDArray[np.uint8]:
         raise NotImplementedError
     
+    @ abstractmethod
     def add_translated_text(self,
                             image: npt.NDArray[np.uint8],
                             clean_image: npt.NDArray[np.uint8],
