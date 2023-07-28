@@ -11,7 +11,7 @@ from typing import Any
 
 from src.segmentation.basemodel import BaseModel
 
-class BubbleSegmentationModel(BaseModel):
+class Detectron2BubbleSegmentationModel(BaseModel):
     def __init__(self,
                  model_path: str,
                  device: str = "cpu") -> None:

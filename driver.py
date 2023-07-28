@@ -1,8 +1,11 @@
 from src.translation import Translation
 from  src.processor.text_seg_processor import TextSegProcessor
+from src.processor.combo_seg_processor import ComboSegProcessor
 from src.segmentation.text_seg import TextSegmentationModel
+from src.segmentation.pytorch_bubble_seg import PytorchBubbleSegmentationModel
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 from deep_translator import GoogleTranslator, DeeplTranslator
 from manga_ocr import MangaOcr
@@ -24,22 +27,38 @@ def main():
     # output_img.show()
     # output_img.save(out_path)
 
-    
-
-    seg = TextSegmentationModel("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/best_model_v2.pth",
+    seg_text = TextSegmentationModel("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/best_model_v2.pth",
                                 "cpu")
     # translator = GoogleTranslator("ja", "en")
     translator = DeeplTranslator("ja", "en", os.environ.get("DEEPL_API_KEY"))
     ocr = MangaOcr()
-    processor = TextSegProcessor(seg,
-                                 None,
-                                 translator,
-                                 ocr)
+
+    seg_bub = PytorchBubbleSegmentationModel("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/bubble_seg_model.pth", "cpu")
+    img = cv2.imread("experiments/manga_bubbles_train_2/images/f6dbb986-Daring_in_the_Franxx_44_4.jpg").astype(np.uint8)
+
+    processor = ComboSegProcessor(seg_bub,
+                                  seg_text,
+                                  None,
+                                  translator,
+                                  ocr)
+
+    clean_img = processor.clean_text(img)
+    cv2.imshow("a", clean_img)
+
+    # seg = TextSegmentationModel("/home/chunkanglu/Documents/Deep_Manga_Translator/experiments/best_model_v2.pth",
+    #                             "cpu")
+    # # translator = GoogleTranslator("ja", "en")
+    # translator = DeeplTranslator("ja", "en", os.environ.get("DEEPL_API_KEY"))
+    # ocr = MangaOcr()
+    # processor = TextSegProcessor(seg,
+    #                              None,
+    #                              translator,
+    #                              ocr)
     
-    tr = Translation(processor)
+    # tr = Translation(processor)
     
-    output = tr.translate_page("experiments/manga_bubbles_train_2/images/f6dbb986-Daring_in_the_Franxx_44_4.jpg")
-    output.show()
+    # output = tr.translate_page("experiments/manga_bubbles_train_2/images/f6dbb986-Daring_in_the_Franxx_44_4.jpg")
+    # output.show()
 
 if __name__ == "__main__":
     main()

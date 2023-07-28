@@ -5,12 +5,12 @@ from PIL import Image, ImageDraw, ImageFont
 import re
 
 from src.processor.baseprocessor import BaseProcessor
-from src.segmentation.bubble_seg import BubbleSegmentationModel
+from src.segmentation.detectron_bubble_seg import Detectron2BubbleSegmentationModel
 from src.utils import get_crop, get_text, get_tr_text, draw_text
 
 class BubbleSegProcessor(BaseProcessor):
     def __init__(self,
-                 seg_model: BubbleSegmentationModel,
+                 seg_model: Detectron2BubbleSegmentationModel,
                  inpaint_model,
                  translator,
                  ocr_model) -> None:
