@@ -39,13 +39,13 @@ class ComboSegProcessor(BaseProcessor):
 
             bubble_masks = []
             bubble_bboxs = []
-            text_mask = text_pred["mask"]
+            text_mask = text_pred["mask"].copy()
             text_bboxes = []
 
             # Only keep bubbles with text inside, remove text mask area for those
             for mask, bbox in zip(bubble_pred["masks"], bubble_pred["bboxs"]):
                 intersection = np.logical_and(mask, text_mask)
-                
+
                 if np.any(intersection):
                     bubble_masks.append(mask)
                     bubble_bboxs.append(bbox)
@@ -83,6 +83,7 @@ class ComboSegProcessor(BaseProcessor):
                 "bboxs": bubble_bboxs
             }
             self.text_prediction = {
+                "og_mask": text_pred["mask"],
                 "mask": text_mask,
                 "bboxs": text_bboxes
             }
@@ -98,9 +99,10 @@ class ComboSegProcessor(BaseProcessor):
                    ) -> npt.NDArray[np.uint8]:
         bubble_preds, text_preds = self.cache_prediction(image)
         image = image.copy()
-        image[text_preds["mask"], :] = (255, 255, 255)
-        for mask in bubble_preds["masks"]:
-            image[mask, :] = (255, 255, 255)
+        # image[text_preds["mask"], :] = (255, 255, 255)
+        # for mask in bubble_preds["masks"]:
+        #     image[mask, :] = (255, 255, 255)
+        image[text_preds["og_mask"], :] = (255, 255, 255)
         return image
     
     def add_translated_text(self,
