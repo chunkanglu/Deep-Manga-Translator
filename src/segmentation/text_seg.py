@@ -73,6 +73,7 @@ class TextSegmentationModel(BaseModel):
 
         pred_mask = prediction.squeeze().cpu().numpy()
         pred_mask = pred_mask[:og_shape[0], :og_shape[1]]
+        og_mask = pred_mask
         pred_mask = self.dialate(pred_mask, 3)
         dialated = self.dialate(pred_mask, 5)
 
@@ -92,6 +93,69 @@ class TextSegmentationModel(BaseModel):
             bboxes.append((x1, y1, x2, y2))
 
         return {
+            "og_mask": og_mask,
             "mask": pred_mask,
             "bboxs": bboxes
+        }
+
+class ThresholdTextSegmentationModel(TextSegmentationModel):
+    def __init__(self, model_path: str, device: str) -> None:
+        super().__init__(model_path, device)
+
+    def predict(self,
+            image: npt.NDArray[np.uint8]
+            ) -> dict[str, Any]:
+        preds = super().predict(image)
+
+        og_mask = preds["og_mask"].astype(np.uint8)
+        mask = preds["mask"].astype(np.uint8)
+        bboxs = preds["bboxs"]
+
+        new_mask = np.zeros_like(mask)
+
+        # Move mask down 3 pixels since prediction seems to be a little off
+        # translation_matrix = np.array([
+        #     [1, 0, 0],
+        #     [0, 1, 3]
+        # ], dtype=np.float32)
+        # h, w = mask.shape[:2]
+        # mask_translated = cv2.warpAffine(mask, translation_matrix, (w, h))
+
+        _, thresh = cv2.threshold(
+            image[..., 0], 1, 255, cv2.THRESH_OTSU+cv2.THRESH_BINARY)
+        thresh_neg = cv2.bitwise_not(thresh)
+
+        # selected_mask = cv2.bitwise_and(thresh, mask_translated)
+        # selected_mask_neg = cv2.bitwise_and(thresh_neg, mask_translated)
+        selected_mask = cv2.bitwise_and(thresh, og_mask)
+        selected_mask_neg = cv2.bitwise_and(thresh_neg, og_mask)
+        selected_mask_dia = cv2.bitwise_and(thresh, mask)
+        selected_mask_neg_dia = cv2.bitwise_and(thresh_neg, mask)
+
+        # Choose between white or black section (for white & black text) in each bbox
+        for bbox in bboxs:
+            x1, y1, x2, y2 = bbox
+
+            roi_sel_mask = selected_mask[y1:y2, x1:x2]
+            roi_sel_mask_neg = selected_mask_neg[y1:y2, x1:x2]
+
+            if roi_sel_mask.sum() > roi_sel_mask_neg.sum():
+                new_mask[y1:y2, x1:x2] = \
+                    cv2.bitwise_or(new_mask[y1:y2, x1:x2],
+                                   selected_mask_dia[y1:y2, x1:x2])
+            else:
+                new_mask[y1:y2, x1:x2] = \
+                    cv2.bitwise_or(new_mask[y1:y2, x1:x2],
+                                   selected_mask_neg_dia[y1:y2, x1:x2])
+
+        new_mask = cv2.morphologyEx(new_mask,
+                                    cv2.MORPH_DILATE,
+                                    cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
+                                                                (3, 3)),
+                                    iterations=2)
+
+        return {
+            "og_mask": preds["og_mask"],
+            "mask": new_mask == 1,
+            "bboxs": bboxs
         }

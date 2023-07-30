@@ -1,16 +1,19 @@
+import cv2
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
 import re
-from typing import Any
+from typing import Any, Union
 
 from src.processor.baseprocessor import BaseProcessor
-from src.segmentation.text_seg import TextSegmentationModel
+from src.segmentation.text_seg import TextSegmentationModel, ThresholdTextSegmentationModel
 from src.utils import get_crop, get_text, get_tr_text, draw_text
+
 
 class TextSegProcessor(BaseProcessor):
     def __init__(self,
-                 seg_model: TextSegmentationModel,
+                 seg_model: Union[TextSegmentationModel,
+                                  ThresholdTextSegmentationModel],
                  inpaint_model,
                  translator,
                  ocr_model) -> None:
@@ -23,7 +26,7 @@ class TextSegProcessor(BaseProcessor):
         image = image.copy()
         image[mask, :] = [255, 255, 255]
         return image
-    
+
     def add_translated_text(self,
                             image: npt.NDArray[np.uint8],
                             clean_image: npt.NDArray[np.uint8],
