@@ -3,6 +3,8 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
 import re
+import functools
+import torchvision.transforms as T
 
 from src.processor.baseprocessor import BaseProcessor
 from src.segmentation.detectron_bubble_seg import Detectron2BubbleSegmentationModel
@@ -13,8 +15,9 @@ class BubbleSegProcessor(BaseProcessor):
                  seg_model: Detectron2BubbleSegmentationModel,
                  inpaint_model,
                  translator,
-                 ocr_model) -> None:
-        super().__init__(seg_model, inpaint_model, translator, ocr_model)
+                 ocr_model,
+                 device) -> None:
+        super().__init__(seg_model, inpaint_model, translator, ocr_model, device)
 
     # def get_masks(self,
     #               image: npt.NDArray[np.uint8]
@@ -28,15 +31,22 @@ class BubbleSegProcessor(BaseProcessor):
     #     preds = self.seg_model.predict(image)
     #     return preds["bboxs"]
     
-    # TODO: use inpainting here
+    # TODO: untested
     def clean_text(self,
                    image: npt.NDArray[np.uint8]
                    ) -> npt.NDArray[np.uint8]:
         preds = self.seg_model.predict(image)
-        image = image.copy()
-        for mask in preds["masks"]:
-            image[mask, :] = [255, 255, 255]
-        return image
+        
+        if self.inpaint_model is None:
+            image = image.copy()
+            for mask in preds["masks"]:
+                image[mask, :] = [255, 255, 255]
+            return image
+        
+        combined_mask = functools.reduce(np.logical_or, preds["masks"])
+        image_t = T.ToTensor()(image).to(self.device)
+        mask_t = T.ToTensor()(combined_mask).to(self.device)
+        return self.inpaint_model.predict(image_t, mask_t)
 
     def add_translated_text(self,
                             image: npt.NDArray[np.uint8],

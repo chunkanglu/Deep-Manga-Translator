@@ -1,12 +1,13 @@
 import cv2
+import re
+from typing import Any
+
 import largestinteriorrectangle as lir
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
-import re
 import matplotlib.pyplot as plt
-
-from typing import Any
+import torchvision.transforms as T
 
 from src.processor.baseprocessor import BaseProcessor
 from src.segmentation.basemodel import BaseModel
@@ -21,8 +22,9 @@ class ComboSegProcessor(BaseProcessor):
                  text_seg_model: TextSegmentationModel,
                  inpaint_model,
                  translator,
-                 ocr_model) -> None:
-        super().__init__(bubble_seg_model, inpaint_model, translator, ocr_model)
+                 ocr_model,
+                 device) -> None:
+        super().__init__(bubble_seg_model, inpaint_model, translator, ocr_model, device)
 
         self.text_seg_model = text_seg_model
         self.bubble_prediction = None
@@ -93,17 +95,21 @@ class ComboSegProcessor(BaseProcessor):
         return (self.bubble_prediction,
                 self.text_prediction)
     
-    # TODO: use inpainting here
     def clean_text(self,
                    image: npt.NDArray[np.uint8]
                    ) -> npt.NDArray[np.uint8]:
         bubble_preds, text_preds = self.cache_prediction(image)
-        image = image.copy()
         # image[text_preds["mask"], :] = (255, 255, 255)
         # for mask in bubble_preds["masks"]:
         #     image[mask, :] = (255, 255, 255)
-        image[text_preds["og_mask"], :] = (255, 255, 255)
-        return image
+        if self.inpaint_model is None:
+            image = image.copy()
+            image[text_preds["og_mask"], :] = (255, 255, 255)
+            return image
+        
+        image_t = T.ToTensor()(image).to(self.device)
+        mask_t = T.ToTensor()(text_preds["og_mask"]).to(self.device)
+        return self.inpaint_model.predict(image_t, mask_t)
     
     def add_translated_text(self,
                             image: npt.NDArray[np.uint8],

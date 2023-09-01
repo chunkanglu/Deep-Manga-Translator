@@ -11,11 +11,13 @@ class BaseProcessor(metaclass=ABCMeta):
                  seg_model: BaseModel,
                  inpaint_model,
                  translator,
-                 ocr_model) -> None:
+                 ocr_model,
+                 device) -> None:
         self.seg_model = seg_model
         self.inpaint_model = inpaint_model
         self.translator = translator
         self.ocr_model = ocr_model
+        self.device = device
 
         self.last_image = None
         self.prediction = None
