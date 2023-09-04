@@ -32,13 +32,14 @@ if "loaded_model" not in st.session_state:
 TEXT_SEG_MODEL = "text_seg_model.pth"
 BUBBLE_SEG_MODEL = "bubble_seg_model.pth"
 COARSE_INPAINT_MODEL = "coarse_gen_states_places2.pth"
+FONT = "wildwordsroman.TTF"
 
 @st.cache_resource(show_spinner=False)
 def download_models():
     if not os.path.exists("assets"):
         os.makedirs("assets")
 
-    needed_models = [TEXT_SEG_MODEL, BUBBLE_SEG_MODEL, COARSE_INPAINT_MODEL]
+    needed_models = [TEXT_SEG_MODEL, BUBBLE_SEG_MODEL, COARSE_INPAINT_MODEL, FONT]
     for i in needed_models:
         model_path = Path("./assets", i)
         if not model_path.exists():
@@ -136,7 +137,8 @@ def main():
             pr = get_processor(translator,
                                inpainter,
                                processor)
-            st.session_state.loaded_model = Translation(pr)
+            st.session_state.loaded_model = Translation(pr,
+                                                        f"assets/{FONT}")
         else:
             st.warning("Please wait until models have finished downloading")
 
