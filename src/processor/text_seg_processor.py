@@ -1,7 +1,5 @@
-import re
 from typing import Any, Union
 
-import cv2
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont

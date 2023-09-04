@@ -1,16 +1,13 @@
 import cv2
-import re
 from typing import Any
 
 import largestinteriorrectangle as lir
 import numpy as np
 import numpy.typing as npt
-from PIL import Image, ImageDraw, ImageFont
-import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
 import torchvision.transforms as T
 
 from src.processor.baseprocessor import BaseProcessor
-from src.segmentation.basemodel import BaseModel
 from src.segmentation.pytorch_bubble_seg import PytorchBubbleSegmentationModel
 from src.segmentation.text_seg import TextSegmentationModel
 from src.utils import get_crop, get_text, get_tr_text, draw_text

@@ -2,7 +2,6 @@ import largestinteriorrectangle as lir
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
-import re
 import functools
 import torchvision.transforms as T
 
