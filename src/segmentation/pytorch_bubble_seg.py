@@ -10,7 +10,7 @@ class PytorchBubbleSegmentationModel(BaseModel):
     def __init__(self, model_path: str, device: str) -> None:
         super().__init__(model_path, device)
 
-        self.predictor = torch.load(self.model_path).to(self.device)
+        self.predictor = torch.load(self.model_path, map_location=device).to(device)
 
     def predict(self,
                 image: npt.NDArray[np.uint8]

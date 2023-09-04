@@ -206,7 +206,7 @@ class CoarseGANInpainter(nn.Module):
         self.device = device
 
         if checkpoint is not None:
-            generator_state_dict = torch.load(checkpoint)
+            generator_state_dict = torch.load(checkpoint, map_location=device)
             self.load_state_dict(generator_state_dict, strict=True)
 
         self.eval()

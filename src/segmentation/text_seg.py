@@ -51,7 +51,7 @@ class TextSegmentationModel(BaseModel):
                                                                              (3, 3)),
                                                    iterations=iterations)
 
-        self.predictor = torch.load(self.model_path).to(self.device)
+        self.predictor = torch.load(self.model_path, map_location=device).to(device)
 
     def predict(self,
                 image: npt.NDArray[np.uint8]
