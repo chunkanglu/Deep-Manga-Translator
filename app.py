@@ -83,8 +83,6 @@ def main():
         pr = get_processor()
         st.session_state.loaded_model = Translation(pr,
                                                     f"assets/{FONT}")
-    else:
-        st.warning("Please wait until models have finished downloading")
 
     with st.form(key="input", clear_on_submit=True):
         n_cols = st.number_input("Number of side-by-side images:", 1, 10, 1)
