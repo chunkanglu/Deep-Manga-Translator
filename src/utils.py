@@ -46,7 +46,7 @@ def process_tr_text(text: Union[str, None]
 
 
 def draw_text(bbox: tuple[int, int, int, int],
-              tr_text: str | None,
+              tr_text: Union[str, None],
               img_to_draw: ImageDraw.ImageDraw,
               font_path: str,
               text_buffer: float = 1.0,
