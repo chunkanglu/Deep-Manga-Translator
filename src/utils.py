@@ -5,6 +5,8 @@ import re
 from string import punctuation
 from textwrap import fill
 
+from typing import Union
+
 COLOR_WHITE = (255, 255, 255)
 
 
@@ -27,8 +29,8 @@ def get_tr_text(text: str,
     return translator.translate(text)
 
 
-def process_tr_text(text: str | None
-                    ) -> str | None:
+def process_tr_text(text: Union[str, None]
+                    ) -> Union[str, None]:
     if text is None:
         return None
 
