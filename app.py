@@ -34,7 +34,6 @@ BUBBLE_SEG_MODEL = "bubble_seg_model.pth"
 COARSE_INPAINT_MODEL = "coarse_gen_states_places2.pth"
 FONT = "wildwordsroman.TTF"
 
-@st.cache_resource(show_spinner=False)
 def download_models():
     if not os.path.exists("assets"):
         os.makedirs("assets")
@@ -58,87 +57,34 @@ def download_models():
 
             progress_bar.close()
 
-def get_processor(translator: str,
-                  inpainter: str,
-                  processor: str):
-    if translator == "Google":
-        tr = GoogleTranslator("ja", "en")
-    elif translator == "Deepl":
-        tr = DeeplTranslator("ja", "en", api_key=st.secrets["DEEPL_API_KEY"])
-    
-    if inpainter == "None":
-        ip = None
-    elif inpainter == "Coarse Inpaint":
-        ip = CoarseGANInpainter(device=DEVICE)
-
-    if processor == "Text":
-        seg = TextSegmentationModel("./assets/text_seg_model.pth", DEVICE)
-        return TextSegProcessor(seg,
-                                ip,
-                                tr,
-                                st.session_state.ocr,
-                                DEVICE)
-    elif processor == "Text Threshold":
-        seg = ThresholdTextSegmentationModel("./assets/text_seg_model.pth", DEVICE)
-        return TextSegProcessor(seg,
-                                ip,
-                                tr,
-                                st.session_state.ocr,
-                                DEVICE)
-    elif processor == "Bubble":
-        seg = PytorchBubbleSegmentationModel("./assets/bubble_seg_model.pth", DEVICE)
-        return BubbleSegProcessor(seg,
-                                  ip,
-                                  tr,
-                                  st.session_state.ocr,
-                                  DEVICE)
-    elif processor == "Combo":
-        seg_text = TextSegmentationModel("./assets/text_seg_model.pth", DEVICE)
-        seg_bub = PytorchBubbleSegmentationModel("./assets/bubble_seg_model.pth", DEVICE)
-        return ComboSegProcessor(seg_bub,
-                                 seg_text,
-                                 ip,
-                                 tr,
-                                 st.session_state.ocr,
-                                 DEVICE)
-    elif processor == "Combo Threshold":
-        seg_text = ThresholdTextSegmentationModel("./assets/text_seg_model.pth", DEVICE)
-        seg_bub = PytorchBubbleSegmentationModel("./assets/bubble_seg_model.pth", DEVICE)
-        return ComboSegProcessor(seg_bub,
-                                 seg_text,
-                                 ip,
-                                 tr,
-                                 st.session_state.ocr,
-                                 DEVICE)
+@st.cache_resource(show_spinner=False)
+def get_processor():
+    tr = DeeplTranslator("ja", "en", api_key=st.secrets["DEEPL_API_KEY"])
+    seg_text = ThresholdTextSegmentationModel(f"./assets/{TEXT_SEG_MODEL}", DEVICE)
+    seg_bub = PytorchBubbleSegmentationModel(f"./assets/{BUBBLE_SEG_MODEL}", DEVICE)
+    ip = CoarseGANInpainter(checkpoint=f"./assets/{COARSE_INPAINT_MODEL}", device=DEVICE)
+    return ComboSegProcessor(seg_bub,
+                             seg_text,
+                             ip,
+                             tr,
+                             st.session_state.ocr,
+                             DEVICE)
 
 def main():
     st.title("Deep Manga Translator")
 
     st.write("A fully machine Japanese to English translation service for manga panels.")
 
-    translator = st.selectbox("Select Translator:",
-                              ["Deepl", "Google"])
-    inpainter = st.selectbox("Select Inpainting Method:",
-                             ["None", "Coarse Inpaint"])
-    processor = st.selectbox("Select Text Processing Model:",
-                             ["Text", "Text Threshold", "Bubble", "Combo", "Combo Threshold"])
-    
-    pr = None
-
     if not st.session_state.downloaded_models:
         with st.spinner("Downloading/Loading Model..."):
             download_models()
         st.session_state.downloaded_models = True
 
-    if st.button("Load Model"):
-        if st.session_state.downloaded_models:
-            pr = get_processor(translator,
-                               inpainter,
-                               processor)
-            st.session_state.loaded_model = Translation(pr,
-                                                        f"assets/{FONT}")
-        else:
-            st.warning("Please wait until models have finished downloading")
+        pr = get_processor()
+        st.session_state.loaded_model = Translation(pr,
+                                                    f"assets/{FONT}")
+    else:
+        st.warning("Please wait until models have finished downloading")
 
     with st.form(key="input", clear_on_submit=True):
         n_cols = st.number_input("Number of side-by-side images:", 1, 10, 1)
