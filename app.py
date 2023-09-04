@@ -2,7 +2,6 @@ import requests
 import os
 from pathlib import Path
 from PIL import Image
-import numpy as np
 import streamlit as st
 from tqdm import tqdm
 from zipfile import ZipFile
@@ -11,12 +10,12 @@ from io import BytesIO
 from deep_translator import GoogleTranslator, DeeplTranslator
 from manga_ocr import MangaOcr
 
-from src.inpainter.coarse_gan_inpainter import CoarseGANInpainter
+# from src.inpainter.coarse_gan_inpainter import CoarseGANInpainter
 from src.translation import Translation
 from src.processor.bubble_seg_processor import BubbleSegProcessor
-from src.processor.text_seg_processor import TextSegProcessor
-from src.processor.combo_seg_processor import ComboSegProcessor
-from src.segmentation.text_seg import TextSegmentationModel, ThresholdTextSegmentationModel
+# from src.processor.text_seg_processor import TextSegProcessor
+# from src.processor.combo_seg_processor import ComboSegProcessor
+# from src.segmentation.text_seg import TextSegmentationModel, ThresholdTextSegmentationModel
 from src.segmentation.pytorch_bubble_seg import PytorchBubbleSegmentationModel
 
 st.set_page_config(layout="wide")
@@ -60,15 +59,14 @@ def download_models():
 @st.cache_resource(show_spinner=False)
 def get_processor():
     tr = DeeplTranslator("ja", "en", api_key=st.secrets["DEEPL_API_KEY"])
-    seg_text = ThresholdTextSegmentationModel(f"./assets/{TEXT_SEG_MODEL}", DEVICE)
+    # seg_text = ThresholdTextSegmentationModel(f"./assets/{TEXT_SEG_MODEL}", DEVICE)
     seg_bub = PytorchBubbleSegmentationModel(f"./assets/{BUBBLE_SEG_MODEL}", DEVICE)
-    ip = CoarseGANInpainter(checkpoint=f"./assets/{COARSE_INPAINT_MODEL}", device=DEVICE)
-    return ComboSegProcessor(seg_bub,
-                             seg_text,
-                             ip,
-                             tr,
-                             st.session_state.ocr,
-                             DEVICE)
+    # ip = CoarseGANInpainter(checkpoint=f"./assets/{COARSE_INPAINT_MODEL}", device=DEVICE)
+    return BubbleSegProcessor(seg_bub,
+                              None,
+                              tr,
+                              st.session_state.ocr,
+                              DEVICE)
 
 def main():
     st.title("Deep Manga Translator")
