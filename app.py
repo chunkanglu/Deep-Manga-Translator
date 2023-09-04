@@ -58,7 +58,6 @@ def download_models():
 
             progress_bar.close()
 
-@st.cache_resource(show_spinner=False)
 def get_processor(translator: str,
                   inpainter: str,
                   processor: str):
@@ -111,7 +110,6 @@ def get_processor(translator: str,
                                  tr,
                                  st.session_state.ocr,
                                  DEVICE)
-
 
 def main():
     st.title("Deep Manga Translator")
