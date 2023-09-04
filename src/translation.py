@@ -93,21 +93,22 @@ class Translation:
 
         self.font = font
 
-    def read_img(self,
-                 img_path: str
-                 ) -> npt.NDArray[np.uint8]:
-        img_t = Image.open(img_path)
-        img = np.asarray(img_t, dtype=np.uint8)
+    def process_image(self,
+                      image
+                      ) -> npt.NDArray[np.uint8]:
+        image = np.asarray(image, dtype=np.uint8)
 
-        if len(img.shape) == 2:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        if len(image.shape) == 2:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
-        return img.astype(np.uint8)
+        return image.astype(np.uint8)
     
     def translate_page(self,
-                       image_path: str
+                       image
                        ) -> Image.Image:
-        image = self.read_img(image_path)
+        if isinstance(image, str):
+            image = Image.open(image)
+        image = self.process_image(image)
         clean_image = self.processor.clean_text(image)
         output_image = self.processor.add_translated_text(image,
                                                           clean_image,
