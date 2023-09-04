@@ -10,3 +10,4 @@
 - [ ] Add Docker interface
 - [ ] Separate text segmentation between sfx and actual text
 - [ ] Refactor and clean code
+- [ ] Decide to keep or remove Dectectron2 bubble segmentation model

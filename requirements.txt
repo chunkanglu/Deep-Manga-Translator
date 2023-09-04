@@ -1,18 +1,18 @@
 deep-translator==1.11.4
-#-e git+https://github.com/facebookresearch/detectron2.git@58e472e076a5d861fdcf773d9254a3664e045bf8#egg=detectron2
--f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.10/index.html
-detectron2
+
+# -f https://dl.fbaipublicfiles.com/detectron2/wheels/cpu/torch1.10/index.html
+# detectron2
 
 largestinteriorrectangle==0.2.0
 manga-ocr==0.1.10
 numpy==1.23.1
-opencv-python-headless==4.7.0.68
+opencv-python-headless==4.8.0.74
 Pillow==9.4.0
-streamlit==1.22.0
+streamlit==1.26.0
 
 -f https://download.pytorch.org/whl/torch_stable.html
-torch==1.10.0+cpu 
-torchvision==0.11.0+cpu 
-torchaudio==0.10.0
+torch==2.0.1+cpu 
+torchvision==0.15.2+cpu 
+torchaudio==2.0.2
 
 segmentation-models-pytorch==0.3.3
