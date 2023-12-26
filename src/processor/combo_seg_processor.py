@@ -1,7 +1,6 @@
 import cv2
 from typing import Any
 
-import largestinteriorrectangle as lir
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw
@@ -10,7 +9,6 @@ import torchvision.transforms as T
 from src.processor.baseprocessor import BaseProcessor
 from src.segmentation.pytorch_bubble_seg import PytorchBubbleSegmentationModel
 from src.segmentation.text_seg import TextSegmentationModel
-from src.utils import get_crop, get_text, get_tr_text, draw_text
 
 
 class ComboSegProcessor(BaseProcessor):
@@ -50,11 +48,14 @@ class ComboSegProcessor(BaseProcessor):
                     bubble_bboxs.append(bbox)
 
                     dialated_mask = cv2.morphologyEx(mask.astype(np.uint8),
-                                        cv2.MORPH_DILATE,
-                                        cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
-                                                                  (5, 5)),
-                                        iterations=10)
-                    dialated_mask = cv2.threshold(dialated_mask, 0.5, 1, cv2.THRESH_BINARY)[1].astype(np.uint8) > 0.5
+                                                     cv2.MORPH_DILATE,
+                                                     cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
+                                                                               (5, 5)),
+                                                     iterations=10)
+                    dialated_mask = cv2.threshold(dialated_mask,
+                                                  0.5,
+                                                  1,
+                                                  cv2.THRESH_BINARY)[1].astype(np.uint8) > 0.5
                     text_mask[dialated_mask] = False
 
             # Regenerate new text bboxs
@@ -75,7 +76,7 @@ class ComboSegProcessor(BaseProcessor):
                 y2 = y1 + stats[label, cv2.CC_STAT_HEIGHT]
 
                 text_bboxes.append((x1, y1, x2, y2))
-            
+
             # Save predictions
             self.bubble_prediction = {
                 "masks": bubble_masks,
@@ -91,7 +92,7 @@ class ComboSegProcessor(BaseProcessor):
                 (self.text_prediction is not None))
         return (self.bubble_prediction,
                 self.text_prediction)
-    
+
     def clean_text(self,
                    image: npt.NDArray[np.uint8]
                    ) -> npt.NDArray[np.uint8]:
@@ -103,45 +104,26 @@ class ComboSegProcessor(BaseProcessor):
             image = image.copy()
             image[text_preds["og_mask"], :] = (255, 255, 255)
             return image
-        
+
         image_t = T.ToTensor()(image).to(self.device)
         mask_t = T.ToTensor()(text_preds["og_mask"]).to(self.device)
         return self.inpaint_model.predict(image_t, mask_t)
-    
+
     def add_translated_text(self,
                             image: npt.NDArray[np.uint8],
                             clean_image: npt.NDArray[np.uint8],
                             font_path: str
                             ) -> Image.Image:
-        
-        def get_largest_text_box(mask: npt.NDArray[np.bool_]
-                                    ) -> npt.NDArray[np.uint32]:
-                return lir.lir(mask).astype(np.uint32)
-        
+
         bubble_preds, text_preds = self.cache_prediction(image)
-        output_image = Image.fromarray(clean_image)
-        draw = ImageDraw.Draw(output_image)
 
-        for bbox in text_preds["bboxs"]:
-            draw = ImageDraw.Draw(output_image)
+        # Sort data in reading order
+        text_data = list(
+            zip([None]*len(text_preds["bboxs"]), text_preds["bboxs"]))
+        bubble_data = list(zip(bubble_preds["masks"], bubble_preds["bboxs"]))
+        all_data = text_data + bubble_data
 
-            crop = get_crop(image, bbox)
-
-            og_text = get_text(crop, self.ocr_model)
-            tr_text = get_tr_text(og_text, self.translator)
-
-            draw_text(bbox, tr_text, draw, font_path)
-
-        for mask, bbox in zip(bubble_preds["masks"], bubble_preds["bboxs"]):
-            draw = ImageDraw.Draw(output_image)
-
-            crop = get_crop(image, bbox)
-
-            og_text = get_text(crop, self.ocr_model)
-            tr_text = get_tr_text(og_text, self.translator)
-
-            x, y, w, h = get_largest_text_box(mask)
-
-            draw_text((x, y, x+w, y+h), tr_text, draw, font_path)
-
-        return output_image
+        return self.add_translated_text_process(image,
+                                                clean_image,
+                                                all_data,
+                                                font_path)

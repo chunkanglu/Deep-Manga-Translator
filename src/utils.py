@@ -1,8 +1,7 @@
+import largestinteriorrectangle as lir
 import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFont
-import re
-from string import punctuation
 from textwrap import fill
 
 from typing import Union
@@ -29,20 +28,29 @@ def get_tr_text(text: str,
     return translator.translate(text)
 
 
+def process_ocr_text(text: str
+                     ) -> str:
+    return text.replace("．", ".")
+
+
 def process_tr_text(text: Union[str, None]
                     ) -> Union[str, None]:
     if text is None:
         return None
 
-    # Remove leading ...
-    text_arr = text.split()
-    if text_arr[0] == "..." or text_arr[0] == "..":
-        text = " ".join(text_arr[1:])
-
-    # Remove leading & trailing punctuation and spaces
-    text = text.strip(punctuation + " ")
-
+    # Remove leading & trailing spaces
+    text = text.strip()
     return text
+
+def ocr_bbox_sort(d):
+    # Right to left, top to bottom using centre of bbox
+    _, bbox = d
+    x, y, w, h = bbox
+    return (y+h//2, -x -w//2)
+
+def get_largest_text_box(mask: npt.NDArray[np.bool_]
+                         ) -> npt.NDArray[np.uint32]:
+    return lir.lir(mask).astype(np.uint32)
 
 
 def draw_text(bbox: tuple[int, int, int, int],
