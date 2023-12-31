@@ -28,6 +28,19 @@ class PytorchBubbleSegmentationModel(BaseModel):
         bboxs = [b.cpu().numpy().astype(np.int64).tolist()
                  for b
                  in prediction[0]["boxes"]]
+
+        OVERLAP_PERCENTAGE = 0.1
+        combined_mask = np.zeros((image.shape[0], image.shape[1]))
+        i = 0
+        while (i < len(masks)):
+            m = masks[i]
+            overlap = np.logical_and(combined_mask, m)
+            if (overlap.sum() >= m.sum() * OVERLAP_PERCENTAGE):
+                masks.pop(i)
+                bboxs.pop(i)
+            else:
+                combined_mask = np.logical_or(combined_mask, m)
+                i += 1
         
         return {
             "masks": masks,
