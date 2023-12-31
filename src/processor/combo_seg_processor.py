@@ -36,56 +36,45 @@ class ComboSegProcessor(BaseProcessor):
 
             bubble_masks = []
             bubble_bboxs = []
+            bubble_text_bboxs = []
             text_mask = text_pred["mask"].copy()
-            text_bboxes = []
+            text_bboxs = text_pred["bboxs"].copy()
 
             # Only keep bubbles with text inside, remove text mask area for those
             for mask, bbox in zip(bubble_pred["masks"], bubble_pred["bboxs"]):
-                intersection = np.logical_and(mask, text_mask)
+                i = 0
+                while (i < len(text_bboxs)):
+                    x1, y1, x2, y2 = text_bboxs[i]
+                    if (np.any(np.logical_and(mask[y1:y2, x1:x2], text_mask[y1:y2, x1:x2]))):
+                        bubble_masks.append(mask)
+                        bubble_bboxs.append(bbox)
+                        bubble_text_bboxs.append((x1, y1, x2, y2))
 
-                if np.any(intersection):
-                    bubble_masks.append(mask)
-                    bubble_bboxs.append(bbox)
+                        dialated_mask = cv2.morphologyEx(mask.astype(np.uint8),
+                                                        cv2.MORPH_DILATE,
+                                                        cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
+                                                                                (5, 5)),
+                                                        iterations=10)
+                        dialated_mask = cv2.threshold(dialated_mask,
+                                                    0.5,
+                                                    1,
+                                                    cv2.THRESH_BINARY)[1].astype(np.uint8) > 0.5
+                        text_mask[dialated_mask] = False
 
-                    dialated_mask = cv2.morphologyEx(mask.astype(np.uint8),
-                                                     cv2.MORPH_DILATE,
-                                                     cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
-                                                                               (5, 5)),
-                                                     iterations=10)
-                    dialated_mask = cv2.threshold(dialated_mask,
-                                                  0.5,
-                                                  1,
-                                                  cv2.THRESH_BINARY)[1].astype(np.uint8) > 0.5
-                    text_mask[dialated_mask] = False
-
-            # Regenerate new text bboxs
-            dialated = cv2.morphologyEx(text_mask.astype(np.uint8),
-                                        cv2.MORPH_DILATE,
-                                        cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
-                                                                  (3, 3)),
-                                        iterations=5)
-
-            thresh = cv2.threshold(dialated, 0.5, 1, cv2.THRESH_BINARY)[
-                1].astype(np.uint8)
-            num_labels, _, stats, _ = cv2.connectedComponentsWithStats(thresh,
-                                                                       connectivity=8)
-            for label in range(1, num_labels):
-                x1 = stats[label, cv2.CC_STAT_LEFT]
-                y1 = stats[label, cv2.CC_STAT_TOP]
-                x2 = x1 + stats[label, cv2.CC_STAT_WIDTH]
-                y2 = y1 + stats[label, cv2.CC_STAT_HEIGHT]
-
-                text_bboxes.append((x1, y1, x2, y2))
+                        text_bboxs.pop(i)
+                        break
+                    i += 1
 
             # Save predictions
             self.bubble_prediction = {
                 "masks": bubble_masks,
-                "bboxs": bubble_bboxs
+                "bboxs": bubble_bboxs,
+                "text_bboxs": bubble_text_bboxs
             }
             self.text_prediction = {
                 "og_mask": text_pred["mask"],
                 "mask": text_mask,
-                "bboxs": text_bboxes
+                "bboxs": text_bboxs
             }
 
         assert ((self.bubble_prediction is not None) and
@@ -117,10 +106,9 @@ class ComboSegProcessor(BaseProcessor):
 
         bubble_preds, text_preds = self.cache_prediction(image)
 
-        # Sort data in reading order
         text_data = list(
             zip([None]*len(text_preds["bboxs"]), text_preds["bboxs"]))
-        bubble_data = list(zip(bubble_preds["masks"], bubble_preds["bboxs"]))
+        bubble_data = list(zip(bubble_preds["masks"], bubble_preds["text_bboxs"]))
         all_data = text_data + bubble_data
 
         return self.add_translated_text_process(image,

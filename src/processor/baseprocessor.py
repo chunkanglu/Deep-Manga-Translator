@@ -9,7 +9,7 @@ from src.utils import (get_crop,
                        get_text,
                        get_tr_text,
                        draw_text,
-                       get_largest_text_box,
+                       expand_text_box,
                        process_ocr_text,
                        ocr_bbox_sort)
 
@@ -51,8 +51,6 @@ class BaseProcessor(metaclass=ABCMeta):
                                     data: list[tuple[Union[npt.NDArray[np.bool_], None], tuple[int, int, int, int]]],
                                     font_path: str
                                     ) -> Image.Image:
-        # TODO: See if there is a better separator invariant to translation changes
-        SEP = "|||"
 
         output_image = Image.fromarray(clean_image)
         draw = ImageDraw.Draw(output_image)
@@ -61,24 +59,39 @@ class BaseProcessor(metaclass=ABCMeta):
         masks_data = [m for m, _ in data]
         bbox_data = [b for _, b in data]
 
-        # Translate all at once
-        to_translate = ""
-        for bbox in bbox_data:
+        # # Translate all at once
+        # # TODO: See if there is a better separator invariant to translation changes
+        # SEP = "¶"
+        # to_translate = ""
+        # for bbox in bbox_data:
+        #     crop = get_crop(image, bbox)
+        #     og_text = process_ocr_text(get_text(crop, self.ocr_model))
+        #     to_translate += og_text + SEP
+
+        # # Split back
+        # tr_text = get_tr_text(to_translate, self.translator)
+        # tr_text = tr_text.split(SEP)
+
+        # for mask, bbox, text in zip(masks_data, bbox_data, tr_text):
+        #     if mask is None:
+        #         draw_text(bbox, text, draw, font_path)
+        #     else:
+        #         x, y, w, h = get_largest_text_box(mask)
+        #         draw_text((x, y, x+w, y+h), text, draw, font_path)
+
+        # TODO: #22 Translation with context
+        for mask, bbox in zip(masks_data, bbox_data):
             crop = get_crop(image, bbox)
             og_text = process_ocr_text(get_text(crop, self.ocr_model))
-            to_translate += og_text + SEP
+            text = get_tr_text(og_text, self.translator)
 
-        # Split back
-        tr_text = get_tr_text(to_translate, self.translator)
-        tr_text = tr_text.split(SEP)
-
-        for mask, bbox, text in zip(masks_data, bbox_data, tr_text):
+            TEXT_BUFFER = 0.95
             if mask is None:
-                draw_text(bbox, text, draw, font_path)
+                draw_text(bbox, text, draw, font_path, TEXT_BUFFER)
             else:
-                x, y, w, h = get_largest_text_box(mask)
-                draw_text((x, y, x+w, y+h), text, draw, font_path)
-
+                x1, y1, x2, y2 = expand_text_box(bbox, mask)
+                draw_text((x1, y1, x2, y2), text, draw, font_path, TEXT_BUFFER)
+                
         return output_image
 
     @abstractmethod
