@@ -50,16 +50,16 @@ class ComboSegProcessor(BaseProcessor):
                         bubble_bboxs.append(bbox)
                         bubble_text_bboxs.append((x1, y1, x2, y2))
 
-                        dialated_mask = cv2.morphologyEx(mask.astype(np.uint8),
+                        dilated_mask = cv2.morphologyEx(mask.astype(np.uint8),
                                                         cv2.MORPH_DILATE,
                                                         cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
                                                                                 (5, 5)),
                                                         iterations=10)
-                        dialated_mask = cv2.threshold(dialated_mask,
+                        dilated_mask = cv2.threshold(dilated_mask,
                                                     0.5,
                                                     1,
                                                     cv2.THRESH_BINARY)[1].astype(np.uint8) > 0.5
-                        text_mask[dialated_mask] = False
+                        text_mask[dilated_mask] = False
 
                         text_bboxs.pop(i)
                         break

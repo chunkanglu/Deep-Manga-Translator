@@ -44,7 +44,7 @@ class TextSegmentationModel(BaseModel):
 
         self.preprocessing = get_preprocessing(preprocessing_fn)
 
-        self.dialate = \
+        self.dilate = \
             lambda x, iterations: cv2.morphologyEx(x,
                                                    cv2.MORPH_DILATE,
                                                    cv2.getStructuringElement(cv2.MORPH_ELLIPSE,
@@ -74,12 +74,12 @@ class TextSegmentationModel(BaseModel):
         pred_mask = prediction.squeeze().cpu().numpy()
         pred_mask = pred_mask[:og_shape[0], :og_shape[1]]
         og_mask = pred_mask
-        pred_mask = self.dialate(pred_mask, 5)
-        dialated = self.dialate(pred_mask, 7)
+        pred_mask = self.dilate(pred_mask, 5)
+        dilated = self.dilate(pred_mask, 7)
 
         pred_mask = pred_mask > 0.5
 
-        thresh = cv2.threshold(dialated, 0.5, 1, cv2.THRESH_BINARY)[
+        thresh = cv2.threshold(dilated, 0.5, 1, cv2.THRESH_BINARY)[
             1].astype(np.uint8)
         num_labels, _, stats, _ = cv2.connectedComponentsWithStats(thresh,
                                                                    connectivity=8)
@@ -148,7 +148,7 @@ class ThresholdTextSegmentationModel(TextSegmentationModel):
                     cv2.bitwise_or(new_mask[y1:y2, x1:x2],
                                    selected_mask_neg_dia[y1:y2, x1:x2])
                 
-        new_mask = self.dialate(new_mask, 6)
+        new_mask = self.dilate(new_mask, 6)
 
         return {
             "og_mask": preds["og_mask"],
