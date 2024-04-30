@@ -14,6 +14,8 @@ albumentations = "^1.4.4"
 python-dotenv = "^1.0.1"
 torch = "^2.3.0"
 torchvision = "^0.18.0"
+deep-translator = "^1.11.4"
+segmentation-models-pytorch = "^0.3.3"
 
 [tool.poetry.group.headless]
 optional = true
@@ -32,6 +34,7 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.4.2"
+matplotlib = "^3.8.4"
 
 [build-system]
 requires = ["poetry-core"]
