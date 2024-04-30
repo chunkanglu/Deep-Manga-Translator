@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from PIL import Image, ImageDraw
 import numpy as np
 import numpy.typing as npt
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 from src.segmentation.basemodel import BaseModel
 from src.utils import (
@@ -55,6 +55,7 @@ class BaseProcessor(metaclass=ABCMeta):
             tuple[Union[npt.NDArray[np.bool_], None], tuple[int, int, int, int]]
         ],
         font_path: str,
+        draw_text_logic: Callable
     ) -> Image.Image:
         output_image = Image.fromarray(clean_image)
         draw = ImageDraw.Draw(output_image)
@@ -64,7 +65,8 @@ class BaseProcessor(metaclass=ABCMeta):
         bbox_data = [b for _, b in data]
 
         # # Translate all at once
-        # # TODO: See if there is a better separator invariant to translation changes
+        # TODO: Translation with context
+        # TODO: See if there is a better separator invariant to translation changes
         # SEP = "¶"
         # to_translate = ""
         # for bbox in bbox_data:
@@ -77,24 +79,14 @@ class BaseProcessor(metaclass=ABCMeta):
         # tr_text = tr_text.split(SEP)
 
         # for mask, bbox, text in zip(masks_data, bbox_data, tr_text):
-        #     if mask is None:
-        #         draw_text(bbox, text, draw, font_path)
-        #     else:
-        #         x1, y1, x2, y2 = get_largest_text_box(mask)
-        #         draw_text((x1, y1, x2, y22), text, draw, font_path)
+        #     draw_text_logic(draw, mask, bbox, text)
 
-        # TODO: #22 Translation with context
-        for mask, bbox in zip(masks_data, bbox_data):
+        for mask, bbox in data:
             crop = get_crop(image, bbox)
             og_text = process_ocr_text(get_text(crop, self.ocr_model))
             text = get_tr_text(og_text, self.translator)
 
-            TEXT_BUFFER = 0.95
-            if mask is None:
-                draw_text(bbox, text, draw, font_path, TEXT_BUFFER)
-            else:
-                x1, y1, x2, y2 = get_text_box(bbox, mask)
-                draw_text((x1, y1, x2, y2), text, draw, font_path, TEXT_BUFFER)
+            draw_text_logic(draw, mask, bbox, text)
 
         return output_image
 

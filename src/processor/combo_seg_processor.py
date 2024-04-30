@@ -9,7 +9,7 @@ import torchvision.transforms as T
 from src.processor.baseprocessor import BaseProcessor
 from src.segmentation.pytorch_bubble_seg import PytorchBubbleSegmentationModel
 from src.segmentation.text_seg import TextSegmentationModel
-from src.utils import DeviceEnum
+from src.utils import TEXT_BUFFER, DeviceEnum, draw_text, get_text_box
 
 
 class ComboSegProcessor(BaseProcessor):
@@ -115,4 +115,11 @@ class ComboSegProcessor(BaseProcessor):
         bubble_data = list(zip(bubble_preds["masks"], bubble_preds["text_bboxs"]))
         all_data = text_data + bubble_data
 
-        return self.add_translated_text_process(image, clean_image, all_data, font_path)
+        def draw_text_logic(draw, mask, bbox, text) -> None:
+            if mask is None:
+                draw_text(bbox, text, draw, font_path, TEXT_BUFFER)
+            else:
+                x1, y1, x2, y2 = get_text_box(bbox, mask)
+                draw_text((x1, y1, x2, y2), text, draw, font_path, TEXT_BUFFER)
+
+        return self.add_translated_text_process(image, clean_image, all_data, font_path, draw_text_logic)

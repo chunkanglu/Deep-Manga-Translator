@@ -10,7 +10,7 @@ from src.segmentation.text_seg import (
     TextSegmentationModel,
     ThresholdTextSegmentationModel,
 )
-from src.utils import DeviceEnum
+from src.utils import TEXT_BUFFER, DeviceEnum, draw_text
 
 
 class TextSegProcessor(BaseProcessor):
@@ -43,7 +43,9 @@ class TextSegProcessor(BaseProcessor):
         font_path: str,
     ) -> Image.Image:
         bboxs = self.cache_prediction(image)["bboxs"]
-
         data = list(zip([None] * len(bboxs), bboxs))
 
-        return self.add_translated_text_process(image, clean_image, data, font_path)
+        def draw_text_logic(draw, _, bbox, text) -> None:
+            draw_text(bbox, text, draw, font_path, TEXT_BUFFER)
+
+        return self.add_translated_text_process(image, clean_image, data, font_path, draw_text_logic)

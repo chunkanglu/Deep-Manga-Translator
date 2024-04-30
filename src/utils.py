@@ -8,6 +8,7 @@ from textwrap import fill
 from typing import Union
 
 COLOR_WHITE = (255, 255, 255)
+TEXT_BUFFER = 0.95
 
 
 class DeviceEnum(Enum):
