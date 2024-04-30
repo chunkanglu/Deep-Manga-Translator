@@ -5,6 +5,7 @@ import functools
 import torchvision.transforms as T
 
 from src.processor.baseprocessor import BaseProcessor
+from src.utils import TEXT_BUFFER, draw_text, get_largest_text_box, ocr_bbox_sort
 
 
 class BubbleSegProcessor(BaseProcessor):
@@ -35,4 +36,8 @@ class BubbleSegProcessor(BaseProcessor):
         preds = self.cache_prediction(image)
         data = list(zip(preds["masks"], preds["bboxs"]))
 
-        return self.add_translated_text_process(image, clean_image, data, font_path)
+        def draw_text_logic(draw, mask, _, text) -> None:
+            x1, y1, x2, y2 = get_largest_text_box(mask)
+            draw_text((x1, y1, x2, y2), text, draw, font_path, TEXT_BUFFER)
+
+        return self.add_translated_text_process(image, clean_image, data, font_path, draw_text_logic)

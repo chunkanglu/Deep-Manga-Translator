@@ -7,6 +7,8 @@ from typing import Any
 from src.segmentation.basemodel import BaseModel
 from src.utils import DeviceEnum
 
+OVERLAP_PERCENTAGE = 0.1
+
 
 class PytorchBubbleSegmentationModel(BaseModel):
     def __init__(self, model_path: str, device: DeviceEnum) -> None:
@@ -30,7 +32,6 @@ class PytorchBubbleSegmentationModel(BaseModel):
             b.cpu().numpy().astype(np.int64).tolist() for b in prediction[0]["boxes"]
         ]
 
-        OVERLAP_PERCENTAGE = 0.1
         combined_mask = np.zeros((image.shape[0], image.shape[1]))
         i = 0
         while i < len(masks):
