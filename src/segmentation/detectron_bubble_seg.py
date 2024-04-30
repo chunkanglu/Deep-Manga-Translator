@@ -10,10 +10,11 @@ import numpy.typing as npt
 from typing import Any
 
 from src.segmentation.basemodel import BaseModel
+from src.utils import DeviceEnum
 
 
 class Detectron2BubbleSegmentationModel(BaseModel):
-    def __init__(self, model_path: str, device: str = "cpu") -> None:
+    def __init__(self, model_path: str, device: DeviceEnum = DeviceEnum.CPU) -> None:
         super().__init__(model_path, device)
 
         seg_model_head, seg_model_tail = os.path.split(model_path)

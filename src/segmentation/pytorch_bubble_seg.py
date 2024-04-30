@@ -5,13 +5,14 @@ from torchvision.transforms import functional as TF
 from typing import Any
 
 from src.segmentation.basemodel import BaseModel
+from src.utils import DeviceEnum
 
 
 class PytorchBubbleSegmentationModel(BaseModel):
-    def __init__(self, model_path: str, device: str) -> None:
+    def __init__(self, model_path: str, device: DeviceEnum) -> None:
         super().__init__(model_path, device)
 
-        self.predictor = torch.load(self.model_path, map_location=device).to(device)
+        self.predictor = torch.load(self.model_path, map_location=self.device).to(self.device)
 
     def predict(self, image: npt.NDArray[np.uint8]) -> dict[str, Any]:
         self.predictor.eval()
