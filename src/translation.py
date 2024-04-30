@@ -52,20 +52,21 @@ import numpy.typing as npt
 
 
 class Translation:
-    def __init__(self,
-                 processor: BaseProcessor,
-                 font: str = "assets/wildwordsroman.TTF",
-                 ) -> None:
-    # def __init__(self,
-    #              processor: BaseProcessor,
-    #              seg_model_path: str = "assets/model.pth",
-    #              translator: str = "Deepl",
-    #              src: str = "ja",
-    #              tgt: str = "en",
-    #              text_buffer: float = 0.95,
-    #              font: str = "assets/wildwordsroman.TTF",
-    #              api_key: Optional[str] = None,
-    #              ) -> None:
+    def __init__(
+        self,
+        processor: BaseProcessor,
+        font: str = "assets/wildwordsroman.TTF",
+    ) -> None:
+        # def __init__(self,
+        #              processor: BaseProcessor,
+        #              seg_model_path: str = "assets/model.pth",
+        #              translator: str = "Deepl",
+        #              src: str = "ja",
+        #              tgt: str = "en",
+        #              text_buffer: float = 0.95,
+        #              font: str = "assets/wildwordsroman.TTF",
+        #              api_key: Optional[str] = None,
+        #              ) -> None:
 
         # model_path = Path(seg_model_path)
         # font_path = Path(font)
@@ -88,32 +89,24 @@ class Translation:
         #     self.tr = GoogleTranslator(source=src, target=tgt)
         # else:
         #     raise Exception("Invalid Translator")
-        
+
         self.processor = processor
 
         self.font = font
 
-    def process_image(self,
-                      image
-                      ) -> npt.NDArray[np.uint8]:
+    def process_image(self, image) -> npt.NDArray[np.uint8]:
         image = np.asarray(image, dtype=np.uint8)
 
         if len(image.shape) == 2:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
         return image.astype(np.uint8)
-    
-    def translate_page(self,
-                       image
-                       ) -> Image.Image:
+
+    def translate_page(self, image) -> Image.Image:
         if isinstance(image, str):
             image = Image.open(image)
         image = self.process_image(image)
         clean_image = self.processor.clean_text(image)
-        output_image = self.processor.add_translated_text(image,
-                                                          clean_image,
-                                                          self.font)
-        
+        output_image = self.processor.add_translated_text(image, clean_image, self.font)
+
         return output_image
-
-

@@ -5,22 +5,27 @@ import numpy.typing as npt
 from typing import Any, Union
 
 from src.segmentation.basemodel import BaseModel
-from src.utils import (DeviceEnum, get_crop,
-                       get_text,
-                       get_tr_text,
-                       draw_text,
-                       expand_text_box,
-                       process_ocr_text,
-                       ocr_bbox_sort)
+from src.utils import (
+    DeviceEnum,
+    get_crop,
+    get_text,
+    get_tr_text,
+    draw_text,
+    expand_text_box,
+    process_ocr_text,
+    ocr_bbox_sort,
+)
 
 
 class BaseProcessor(metaclass=ABCMeta):
-    def __init__(self,
-                 seg_model: BaseModel,
-                 inpaint_model,
-                 translator,
-                 ocr_model,
-                 device: DeviceEnum) -> None:
+    def __init__(
+        self,
+        seg_model: BaseModel,
+        inpaint_model,
+        translator,
+        ocr_model,
+        device: DeviceEnum,
+    ) -> None:
         self.seg_model = seg_model
         self.inpaint_model = inpaint_model
         self.translator = translator
@@ -30,9 +35,7 @@ class BaseProcessor(metaclass=ABCMeta):
         self.last_image = None
         self.prediction = None
 
-    def cache_prediction(self,
-                         image: npt.NDArray[np.uint8]
-                         ) -> dict[str, Any]:
+    def cache_prediction(self, image: npt.NDArray[np.uint8]) -> dict[str, Any]:
         if (self.last_image is None) or (not np.array_equal(self.last_image, image)):
             self.last_image = image
             self.prediction = self.seg_model.predict(image)
@@ -40,18 +43,18 @@ class BaseProcessor(metaclass=ABCMeta):
         return self.prediction
 
     @abstractmethod
-    def clean_text(self,
-                   image: npt.NDArray[np.uint8]
-                   ) -> npt.NDArray[np.uint8]:
+    def clean_text(self, image: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
         raise NotImplementedError
 
-    def add_translated_text_process(self,
-                                    image: npt.NDArray[np.uint8],
-                                    clean_image: npt.NDArray[np.uint8],
-                                    data: list[tuple[Union[npt.NDArray[np.bool_], None], tuple[int, int, int, int]]],
-                                    font_path: str
-                                    ) -> Image.Image:
-
+    def add_translated_text_process(
+        self,
+        image: npt.NDArray[np.uint8],
+        clean_image: npt.NDArray[np.uint8],
+        data: list[
+            tuple[Union[npt.NDArray[np.bool_], None], tuple[int, int, int, int]]
+        ],
+        font_path: str,
+    ) -> Image.Image:
         output_image = Image.fromarray(clean_image)
         draw = ImageDraw.Draw(output_image)
 
@@ -91,13 +94,14 @@ class BaseProcessor(metaclass=ABCMeta):
             else:
                 x1, y1, x2, y2 = expand_text_box(bbox, mask)
                 draw_text((x1, y1, x2, y2), text, draw, font_path, TEXT_BUFFER)
-                
+
         return output_image
 
     @abstractmethod
-    def add_translated_text(self,
-                            image: npt.NDArray[np.uint8],
-                            clean_image: npt.NDArray[np.uint8],
-                            font_path: str
-                            ) -> Image.Image:
+    def add_translated_text(
+        self,
+        image: npt.NDArray[np.uint8],
+        clean_image: npt.NDArray[np.uint8],
+        font_path: str,
+    ) -> Image.Image:
         raise NotImplementedError

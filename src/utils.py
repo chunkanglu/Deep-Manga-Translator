@@ -9,37 +9,32 @@ from typing import Union
 
 COLOR_WHITE = (255, 255, 255)
 
+
 class DeviceEnum(Enum):
-    CPU = 'cpu'
-    CUDA = 'cuda'
+    CPU = "cpu"
+    CUDA = "cuda"
 
 
-def get_crop(img: npt.NDArray[np.uint8],
-             bbox: tuple[int, int, int, int]
-             ) -> npt.NDArray[np.uint8]:
+def get_crop(
+    img: npt.NDArray[np.uint8], bbox: tuple[int, int, int, int]
+) -> npt.NDArray[np.uint8]:
     x1, y1, x2, y2 = bbox
     return img[y1:y2, x1:x2]
 
 
-def get_text(img: npt.NDArray[np.uint8],
-             ocr_model
-             ) -> str:
+def get_text(img: npt.NDArray[np.uint8], ocr_model) -> str:
     return ocr_model(Image.fromarray(img))
 
 
-def get_tr_text(text: str,
-                translator
-                ) -> str:
+def get_tr_text(text: str, translator) -> str:
     return translator.translate(text)
 
 
-def process_ocr_text(text: str
-                     ) -> str:
+def process_ocr_text(text: str) -> str:
     return text.replace("．", ".")
 
 
-def process_tr_text(text: Union[str, None]
-                    ) -> Union[str, None]:
+def process_tr_text(text: Union[str, None]) -> Union[str, None]:
     if text is None:
         return None
 
@@ -47,15 +42,17 @@ def process_tr_text(text: Union[str, None]
     text = text.strip()
     return text
 
+
 def ocr_bbox_sort(d):
     # Right to left, top to bottom using centre of bbox
     _, bbox = d
     x, y, w, h = bbox
-    return (y+h//2, -x -w//2)
+    return (y + h // 2, -x - w // 2)
 
-def expand_text_box(bbox: tuple[int, int, int, int],
-                    mask: npt.NDArray[np.bool_]
-                    ) -> tuple[int, int, int, int]:
+
+def expand_text_box(
+    bbox: tuple[int, int, int, int], mask: npt.NDArray[np.bool_]
+) -> tuple[int, int, int, int]:
     """
     Enlarges text bounding box horizontally to edge of mask.
 
@@ -83,23 +80,20 @@ def expand_text_box(bbox: tuple[int, int, int, int],
     except ValueError:
         pass
 
-    return (left_expanded,
-            y1,
-            right_expanded,
-            y2)
+    return (left_expanded, y1, right_expanded, y2)
 
 
-def get_largest_text_box(mask: npt.NDArray[np.bool_]
-                         ) -> npt.NDArray[np.uint32]:
+def get_largest_text_box(mask: npt.NDArray[np.bool_]) -> npt.NDArray[np.uint32]:
     return lir.lir(mask).astype(np.uint32)
 
 
-def draw_text(bbox: tuple[int, int, int, int],
-              tr_text: Union[str, None],
-              img_to_draw: ImageDraw.ImageDraw,
-              font_path: str,
-              text_buffer: float = 1.0,
-              ) -> None:
+def draw_text(
+    bbox: tuple[int, int, int, int],
+    tr_text: Union[str, None],
+    img_to_draw: ImageDraw.ImageDraw,
+    font_path: str,
+    text_buffer: float = 1.0,
+) -> None:
     x1, y1, x2, y2 = bbox
     mid_v = (x1 + x2) // 2
     mid_h = (y1 + y2) // 2
@@ -110,7 +104,7 @@ def draw_text(bbox: tuple[int, int, int, int],
 
     if (tr_text is None) or (tr_text == ""):
         return
-    
+
     text_chunks = tr_text.split()
 
     print_text = ""
@@ -122,19 +116,21 @@ def draw_text(bbox: tuple[int, int, int, int],
         font_size = (upper_font_size + lower_font_size) // 2
 
         curr_font = ImageFont.truetype(font_path, font_size)
-            
+
         lines = []
         line = ""
         for word in text_chunks:
             new_line = line + " " + word
-            l, t, r, b = img_to_draw.textbbox((mid_v, mid_h),
-                                              new_line,
-                                              font=curr_font,
-                                              anchor="mm",
-                                              align="center",
-                                              spacing=1,
-                                              stroke_width=3)
-            if (r - l <= max_buffer_x):
+            l, t, r, b = img_to_draw.textbbox(
+                (mid_v, mid_h),
+                new_line,
+                font=curr_font,
+                anchor="mm",
+                align="center",
+                spacing=1,
+                stroke_width=3,
+            )
+            if r - l <= max_buffer_x:
                 line = new_line
             else:
                 lines.append(line)
@@ -144,13 +140,15 @@ def draw_text(bbox: tuple[int, int, int, int],
 
         print_text = "\n".join(lines)
 
-        left, top, right, bottom = img_to_draw.multiline_textbbox((mid_v, mid_h),
-                                                                  print_text,
-                                                                  font=curr_font,
-                                                                  anchor="mm",
-                                                                  align="center",
-                                                                  spacing=1,
-                                                                  stroke_width=3)
+        left, top, right, bottom = img_to_draw.multiline_textbbox(
+            (mid_v, mid_h),
+            print_text,
+            font=curr_font,
+            anchor="mm",
+            align="center",
+            spacing=1,
+            stroke_width=3,
+        )
 
         if (right - left < max_buffer_x) and (bottom - top < max_buffer_y):
             lower_font_size = font_size
@@ -159,12 +157,14 @@ def draw_text(bbox: tuple[int, int, int, int],
 
     print_font = ImageFont.truetype(font_path, lower_font_size)
 
-    img_to_draw.multiline_text((mid_v, mid_h),
-                               print_text,
-                               (0, 0, 0),
-                               font=print_font,
-                               anchor="mm",
-                               align="center",
-                               spacing=1,
-                               stroke_width=3,
-                               stroke_fill=COLOR_WHITE)
+    img_to_draw.multiline_text(
+        (mid_v, mid_h),
+        print_text,
+        (0, 0, 0),
+        font=print_font,
+        anchor="mm",
+        align="center",
+        spacing=1,
+        stroke_width=3,
+        stroke_fill=COLOR_WHITE,
+    )
