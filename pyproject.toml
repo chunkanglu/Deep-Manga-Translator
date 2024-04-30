@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "deep-manga-translator"
+version = "0.1.0"
+description = ""
+authors = ["Chun Kang Lu <chunkanglu@gmail.com>"]
+readme = "README.md"
+package-mode = false # Temp since too lazy to rename src folder to deep-manga-translator and deal with imports
+
+[tool.poetry.dependencies]
+python = "^3.10"
+largestinteriorrectangle = "^0.2.0"
+manga-ocr = "^0.1.11"
+albumentations = "^1.4.4"
+python-dotenv = "^1.0.1"
+torch = "^2.3.0"
+torchvision = "^0.18.0"
+
+[tool.poetry.group.headless]
+optional = true
+
+[tool.poetry.group.headless.dependencies]
+opencv-contrib-python-headless = "^4.9.0.80"
+
+[tool.poetry.group.non-headless]
+optional = true
+
+[tool.poetry.group.non-headless.dependencies]
+opencv-contrib-python = "^4.9.0.80"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

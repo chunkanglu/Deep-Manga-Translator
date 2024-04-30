@@ -6,6 +6,7 @@ req.txt
 .env
 .streamlit
 experiments
+requirements
 
 driver.py
 driver.ipynb
