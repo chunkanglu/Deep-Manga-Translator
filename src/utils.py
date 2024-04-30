@@ -50,9 +50,16 @@ def ocr_bbox_sort(d):
     return (y + h // 2, -x - w // 2)
 
 
+def get_text_box(bbox: tuple[int, int, int, int], mask: npt.NDArray[np.bool_]) -> tuple[int, int, int, int]:
+    # First try to expand text bbox
+    if expanded_box := expand_text_box(bbox=bbox, mask=mask):
+        return expanded_box
+    # If that fails (ie. bbox sticks out of bubble mask), fall back to largest interior rectangle
+    return get_largest_text_box(mask=mask)
+
 def expand_text_box(
     bbox: tuple[int, int, int, int], mask: npt.NDArray[np.bool_]
-) -> tuple[int, int, int, int]:
+) -> tuple[int, int, int, int] | None:
     """
     Enlarges text bounding box horizontally to edge of mask.
 
@@ -72,19 +79,22 @@ def expand_text_box(
         right_mask_bound = int(np.min(np.where(~mask_crop_right)[1]))
         right_expanded = max(right_expanded, x2 + right_mask_bound)
     except ValueError:
-        pass
+        print("Cannot find right edge of mask.")
+        return None
 
     try:
         left_mask_bound = int(np.max(np.where(~mask_crop_left)[1]))
         left_expanded = min(left_expanded, left_mask_bound)
     except ValueError:
-        pass
+        print("Cannot find left edge of mask.")
+        return None
 
     return (left_expanded, y1, right_expanded, y2)
 
 
-def get_largest_text_box(mask: npt.NDArray[np.bool_]) -> npt.NDArray[np.uint32]:
-    return lir.lir(mask).astype(np.uint32)
+def get_largest_text_box(mask: npt.NDArray[np.bool_]) -> tuple[int, int, int, int]:
+    x, y, w, h = lir.lir(mask).astype(np.uint32)
+    return (x, y, x+w, y+h)
 
 
 def draw_text(

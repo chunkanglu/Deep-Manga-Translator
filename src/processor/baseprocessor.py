@@ -9,6 +9,7 @@ from src.utils import (
     DeviceEnum,
     get_crop,
     get_text,
+    get_text_box,
     get_tr_text,
     draw_text,
     expand_text_box,
@@ -79,8 +80,8 @@ class BaseProcessor(metaclass=ABCMeta):
         #     if mask is None:
         #         draw_text(bbox, text, draw, font_path)
         #     else:
-        #         x, y, w, h = get_largest_text_box(mask)
-        #         draw_text((x, y, x+w, y+h), text, draw, font_path)
+        #         x1, y1, x2, y2 = get_largest_text_box(mask)
+        #         draw_text((x1, y1, x2, y22), text, draw, font_path)
 
         # TODO: #22 Translation with context
         for mask, bbox in zip(masks_data, bbox_data):
@@ -92,7 +93,7 @@ class BaseProcessor(metaclass=ABCMeta):
             if mask is None:
                 draw_text(bbox, text, draw, font_path, TEXT_BUFFER)
             else:
-                x1, y1, x2, y2 = expand_text_box(bbox, mask)
+                x1, y1, x2, y2 = get_text_box(bbox, mask)
                 draw_text((x1, y1, x2, y2), text, draw, font_path, TEXT_BUFFER)
 
         return output_image
