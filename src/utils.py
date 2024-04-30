@@ -1,3 +1,4 @@
+from enum import Enum
 import largestinteriorrectangle as lir
 import numpy as np
 import numpy.typing as npt
@@ -7,6 +8,10 @@ from textwrap import fill
 from typing import Union
 
 COLOR_WHITE = (255, 255, 255)
+
+class DeviceEnum(Enum):
+    CPU = 'cpu'
+    CUDA = 'cuda'
 
 
 def get_crop(img: npt.NDArray[np.uint8],

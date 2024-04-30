@@ -7,6 +7,7 @@ import torchvision.transforms as T
 
 from src.processor.baseprocessor import BaseProcessor
 from src.segmentation.text_seg import TextSegmentationModel, ThresholdTextSegmentationModel
+from src.utils import DeviceEnum
 
 
 class TextSegProcessor(BaseProcessor):
@@ -16,7 +17,7 @@ class TextSegProcessor(BaseProcessor):
                  inpaint_model,
                  translator,
                  ocr_model,
-                 device) -> None:
+                 device: DeviceEnum) -> None:
         super().__init__(seg_model, inpaint_model, translator, ocr_model, device)
 
     def clean_text(self,

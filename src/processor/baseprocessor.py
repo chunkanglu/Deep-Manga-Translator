@@ -5,7 +5,7 @@ import numpy.typing as npt
 from typing import Any, Union
 
 from src.segmentation.basemodel import BaseModel
-from src.utils import (get_crop,
+from src.utils import (DeviceEnum, get_crop,
                        get_text,
                        get_tr_text,
                        draw_text,
@@ -20,12 +20,12 @@ class BaseProcessor(metaclass=ABCMeta):
                  inpaint_model,
                  translator,
                  ocr_model,
-                 device) -> None:
+                 device: DeviceEnum) -> None:
         self.seg_model = seg_model
         self.inpaint_model = inpaint_model
         self.translator = translator
         self.ocr_model = ocr_model
-        self.device = device
+        self.device = device.value
 
         self.last_image = None
         self.prediction = None
