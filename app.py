@@ -13,6 +13,7 @@ from manga_ocr import MangaOcr
 # from src.inpainter.coarse_gan_inpainter import CoarseGANInpainter
 from src.translation import Translation
 from src.processor.bubble_seg_processor import BubbleSegProcessor
+
 # from src.processor.text_seg_processor import TextSegProcessor
 # from src.processor.combo_seg_processor import ComboSegProcessor
 # from src.segmentation.text_seg import TextSegmentationModel, ThresholdTextSegmentationModel
@@ -32,6 +33,7 @@ TEXT_SEG_MODEL = "text_seg_model.pth"
 BUBBLE_SEG_MODEL = "bubble_seg_model.pth"
 COARSE_INPAINT_MODEL = "coarse_gen_states_places2.pth"
 FONT = "wildwordsroman.TTF"
+
 
 def download_models():
     if not os.path.exists("assets"):
@@ -56,22 +58,22 @@ def download_models():
 
             progress_bar.close()
 
+
 @st.cache_resource(show_spinner=False)
 def get_processor():
     tr = DeeplTranslator("ja", "en", api_key=st.secrets["DEEPL_API_KEY"])
     # seg_text = ThresholdTextSegmentationModel(f"./assets/{TEXT_SEG_MODEL}", DEVICE)
     seg_bub = PytorchBubbleSegmentationModel(f"./assets/{BUBBLE_SEG_MODEL}", DEVICE)
     # ip = CoarseGANInpainter(checkpoint=f"./assets/{COARSE_INPAINT_MODEL}", device=DEVICE)
-    return BubbleSegProcessor(seg_bub,
-                              None,
-                              tr,
-                              st.session_state.ocr,
-                              DEVICE)
+    return BubbleSegProcessor(seg_bub, None, tr, st.session_state.ocr, DEVICE)
+
 
 def main():
     st.title("Deep Manga Translator")
 
-    st.write("A fully machine Japanese to English translation service for manga panels.")
+    st.write(
+        "A fully machine Japanese to English translation service for manga panels."
+    )
 
     if not st.session_state.downloaded_models:
         with st.spinner("Downloading/Loading Model..."):
@@ -79,19 +81,19 @@ def main():
         st.session_state.downloaded_models = True
 
         pr = get_processor()
-        st.session_state.loaded_model = Translation(pr,
-                                                    f"assets/{FONT}")
+        st.session_state.loaded_model = Translation(pr, f"assets/{FONT}")
 
     with st.form(key="input", clear_on_submit=True):
         n_cols = st.number_input("Number of side-by-side images:", 1, 10, 1)
 
-        image_files = st.file_uploader("Upload Images", type=['png', 'jpeg', 'jpg'], accept_multiple_files=True)
+        image_files = st.file_uploader(
+            "Upload Images", type=["png", "jpeg", "jpg"], accept_multiple_files=True
+        )
 
         go = st.form_submit_button("Reset & Go")
 
     if st.session_state.loaded_model and go:
         if image_files is not None and image_files != []:
-
             original, translated = st.columns(2)
             original.header("Raw")
             translated.header("Translated")
@@ -103,7 +105,6 @@ def main():
             image_files = sorted(image_files, key=lambda x: x.name)
 
             with st.spinner("Processing..."):
-
                 with original:
                     rows1 = [st.columns(int(n_cols)) for _ in range(n_row)]
                     cols1 = [column for row in rows1 for column in row]
@@ -118,7 +119,7 @@ def main():
                     rows2 = [st.columns(int(n_cols)) for _ in range(n_row)]
                     cols2 = [column for row in rows2 for column in row]
 
-                    with ZipFile(zip_file, 'w') as zf:
+                    with ZipFile(zip_file, "w") as zf:
                         for col, (image_name, image) in zip(cols2, image_pair):
                             image = Image.open(image)
                             trans = st.session_state.loaded_model.translate_page(image)
@@ -132,10 +133,12 @@ def main():
 
                             trans.close()
 
-            st.download_button("Download output & reset",
-                              data=zip_file,
-                              file_name="output.zip",
-                              mime="application/zip")
+            st.download_button(
+                "Download output & reset",
+                data=zip_file,
+                file_name="output.zip",
+                mime="application/zip",
+            )
 
 
 if __name__ == "__main__":

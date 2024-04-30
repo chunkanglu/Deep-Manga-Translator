@@ -5,7 +5,9 @@ assets.zip
 req.txt
 .env
 .streamlit
+.ruff_cache
 experiments
+requirements
 
 driver.py
 driver.ipynb
